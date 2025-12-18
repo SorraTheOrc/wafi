@@ -67,6 +67,11 @@ If `wafi --help` shows unexpected output, you may have a conflicting `wafi` comm
 
 To expose `wafi` on your PATH locally, run `npm link` after `npm run build`. That symlinks the built binary (`dist/index.js`) into your global npm bin (honoring the prefix above), so `wafi ...` works from any directory. Use `npm unlink wafi` to remove it later.
 
+## Development
+
+- Issue tracking: this repo uses **Beads** (`bd`) for all work tracking. See https://github.com/steveyegge/beads
+- Agent CLI: recommended tool is **OpenCode** for agent-driven workflows. See https://github.com/opencode-ai/opencode
+
 ## Testing
 
 Build then run tests:
