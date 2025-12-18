@@ -8,14 +8,9 @@ WAFI is not really an acronym:
 
 The fact that it’s jumbled into `WAFI` is the point. It also nods affectionately at the nautical acronym, WAIF ("Wind Assisted Freaking Idiot"), a tongue-in-cheek term used by sailors for someone relying too much on wind power - here pointing at humans or agents relying too much on one another.
 
-## CLI scaffold
+## Features
 
-A minimal Node.js TypeScript CLI that exposes a `wafi` command with a `prd` subcommand. `wafi prd --out <path>` writes a stub PRD markdown file and supports `--json` and `--verbose` flags. This scaffold is the M0 baseline for downstream tasks (`ba2.2.2`, `ba2.3.1`).
-
-## Requirements
-
-- Node.js 18+
-- npm (or pnpm/yarn)
+- no features implemented yet, it's just the CLI scaffold
 
 ## Install
 
