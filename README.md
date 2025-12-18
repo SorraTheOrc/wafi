@@ -17,15 +17,17 @@ This is an experimental project — expect rapid change. This section is intende
 
 WAFI is designed around “agent + human” collaboration: agents propose changes, run constrained tasks, and keep a high-signal paper trail in the repo; humans review, steer, and ship.
 
-For the detailed workflow (including how we structure agent work, track progress, and validate changes), see [`docs/dev/Workflow.md`](docs/dev/Workflow.md).
+For the detailed workflow (including how we structure agent work, track progress, and validate changes), see [`docs/Workflow.md`](docs/Workflow.md).
 
 ### Agent Personas + Guided Commands
 
 We provide multiple agent personas intended to drive different development phases (exploration, implementation, review, release, etc.). Alongside that, we provide workflow-oriented commands that act as guardrails — telling agents what to do next, how to format output, and how to integrate with the repo’s conventions.
 
-### Human CLI + OpenCode
+### CLI-First Interaction
 
-Humans interact with and inspect agent work via a CLI tool (this repo’s `wafi` command). That CLI is designed to integrate with **OpenCode**, so humans can drive the same agent workflows directly through a consistent interface. However, the use of the CLI is optional, humans can also interact with agents directly via chat or other interfaces. While this project is designed to work with the open source OpenCode the majority (if not all) of the functionality should work with other agent frameworks as well - once you wire it up correctly.
+The project provides a CLI tool (`wafi`) that humans, agents, and even old-school systems can use to interact with both agents and Beads (issue tracker). The CLI is a thin layer on top of the underlying tools used in this workflow. Its use is optional, but it provides a consistent interface and helpers for human+agent teams.
+
+When interacting with agents, the `wafi` CLI tool is designed to integrate with **OpenCode** (an open source agent framework). The CLI automates invoking agents with pre-defined prompts and handling outputs according to the workflow conventions. However, use of the CLI is optional; humans can also interact with agents directly via chat or other interfaces.
 
 #### Slash Commands
 
