@@ -24,10 +24,9 @@ From the repo root:
 ```bash
 npm install
 npm run build
-npm link
 ```
 
-This installs dependencies, builds the `wafi` entrypoint to `dist/index.js`, and symlinks it to your global npm bin. For local dev without build, you can run `npm run start` (tsx).
+This installs dependencies and builds the `wafi` entrypoint to `dist/index.js`. For local dev without build, you can run `npm run start` (tsx).
 
 ### Global Install (npm link)
 
