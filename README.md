@@ -59,6 +59,7 @@ Then source it (for bash: `source ~/.bashrc`) and run `npm link` again.
 
 - Issue tracking: this repo uses **Beads** (`bd`) for all work tracking. See [steveyegge/beads](https://github.com/steveyegge/beads)
 - Scheduling: this repo uses **beads-viewer** (`bv`) to schedule and prioritize work using dependency graph insights. See [Dicklesworthstone/beads_viewer](https://github.com/Dicklesworthstone/beads_viewer)
+- Docs: user documentation lives in [`docs`](docs)
 - Docs: developer-focused documentation lives in [`docs/dev`](docs/dev)
 - Agent CLI: recommended tool is **OpenCode** for agent-driven workflows. See [opencode-ai/opencode](https://github.com/opencode-ai/opencode)
 
