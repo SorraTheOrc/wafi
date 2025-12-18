@@ -25,9 +25,17 @@ We provide multiple agent personas intended to drive different development phase
 
 ### Human CLI + OpenCode
 
-Humans interact with and inspect agent work via a CLI tool (this repo’s `wafi` command). That CLI is designed to integrate with **OpenCode**, so humans can drive the same agent workflows directly through a consistent interface.
+Humans interact with and inspect agent work via a CLI tool (this repo’s `wafi` command). That CLI is designed to integrate with **OpenCode**, so humans can drive the same agent workflows directly through a consistent interface. However, the use of the CLI is optional, humans can also interact with agents directly via chat or other interfaces. While this project is designed to work with the open source OpenCode the majority (if not all) of the functionality should work with other agent frameworks as well - once you wire it up correctly.
 
-## Features
+#### Slash Commands
+
+[OpenCode Slash Commands](https://opencode.ai/docs/commands/) are a way to define short commands that guide agents in their completion of specific tasks. WAFI defines several slash commands which can be run directly or via the CLI tool (using `wafi COMMAND [ARGS]`). These commands are defined in [`.opencode/command`](.opencode/command) and include:
+
+- [`/prd`](.opencode/command/prd.md): Creates or edits a PRD through a short interview; optionally seeds from a Beads issue id and/or a target file path, then writes the PRD in a standard Markdown outline.
+- [`/design`](.opencode/command/design.md): Runs an interview + drafting loop to create or improve design notes for a single Beads issue id via `bd update --design`.
+- [`/implement`](.opencode/command/implement.md): Implements a Beads issue end-to-end from an id
+
+## WAFI CLI Features
 
 - no features implemented yet, it's just the CLI scaffold
 
