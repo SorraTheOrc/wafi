@@ -6,7 +6,7 @@ WAFI is not really an acronym:
 - `W` / `F`: Workflow
 - `A` / `I`: Alien Intelligence (NOT Artificial Intelligence)
 
-The fact that it’s jumbled into `WAFI` is the point. It also nods affectionately at the nautical acronym, WAIF ("Wind Assisted Freaking Idiot"), a tongue-in-cheek term used by sailors for someone relying too much on wind power—here pointing at humans or agents relying too much on one another.
+The fact that it’s jumbled into `WAFI` is the point. It also nods affectionately at the nautical acronym, WAIF ("Wind Assisted Freaking Idiot"), a tongue-in-cheek term used by sailors for someone relying too much on wind power - here pointing at humans or agents relying too much on one another.
 
 ## CLI scaffold
 
