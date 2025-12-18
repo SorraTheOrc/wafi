@@ -1,4 +1,4 @@
-# PRD (Outline): Agentic PM CLI (Beads + OpenCode + Copilot)
+# PRD (Outline): Agentic PM CLI (Beads + OpenCode + Copilot) (see wf-ba2)
 
 ## 1) Summary
 
@@ -32,6 +32,8 @@ Product work fragments across docs, chat, and code. The goal is a single, audita
 
 ## 2) Users & Primary Use Cases
 
+Rule of Five policy: use the 5-pass prompt set when authoring/reviewing artifacts (see wf-ba2.1).
+
 ### 2.1 Target user
 
 * Single PM operating inside a git repo.
@@ -61,14 +63,14 @@ Product work fragments across docs, chat, and code. The goal is a single, audita
 
 ## 4) Product Requirements
 
-### 4.1 Beads-native issue lifecycle (must-have)
+### 4.1 Beads-native issue lifecycle (must-have) (see wf-dt1, wf-ca1)
 
 * Create/update/close issues exclusively via `bd`.
 * Use templates for `bug`, `feature`, `epic`; skip templates only where Beads guidance allows.
 * Always emit/consume JSON output for deterministic behavior.
 * Require (or strongly prompt) `bd sync` at the end of each session.
 
-### 4.2 Intake requirements
+### 4.2 Intake requirements (see wf-dt1, wf-ca1)
 
 * Convert an intake statement into a Beads issue with:
   * type suggestion (`bug`/`feature`/`task`/`chore`)
@@ -76,7 +78,7 @@ Product work fragments across docs, chat, and code. The goal is a single, audita
   * initial acceptance criteria (minimal, testable)
 * Must prevent duplicates (at minimum: search/list before create).
 
-### 4.3 Triage requirements
+### 4.3 Triage requirements (see wf-dt1, wf-ca1)
 
 * Support updating:
   * priority, status
@@ -86,7 +88,7 @@ Product work fragments across docs, chat, and code. The goal is a single, audita
   * Default behavior: print the checklist to stdout for quick consumption by the PM or the TUI.
   * Optional: write a temporary, reviewable file `docs/dev/TRIAGE_CHECKLIST.md` when the user requests a persisted checklist; this file is a single-purpose scratchpad and is not intended to become a long-lived artifact unless the user promotes it.
 
-### 4.4 Planning requirements
+### 4.4 Planning requirements (see wf-dt1, wf-ca1)
 
 * Generate/maintain:
   * an epic with subtasks
@@ -97,7 +99,7 @@ Product work fragments across docs, chat, and code. The goal is a single, audita
   * stale work (`bd stale --days N --json`)
 * Should optionally use `bv --robot-*` for dependency insights when present.
 
-### 4.5 Shipping & reporting requirements (Markdown)
+### 4.5 Shipping & reporting requirements (Markdown) (see wf-dt1, wf-ca1)
 
 * Generate artifacts on demand (manual cadence):
   * Release notes (for a given release id/time window)
@@ -105,7 +107,7 @@ Product work fragments across docs, chat, and code. The goal is a single, audita
   * Changelog entries
 * Output must be Markdown and written to the conventions in section 3.
 
-### 4.6 CLI utility commands (recommended)
+### 4.6 CLI utility commands (recommended) (see wf-ba2.8, wf-ba2.5)
 
 * `context` (alias: `ctx`): generate the shared context pack at `docs/dev/CONTEXT_PACK.md` following the template in 8.3.1. The command must respect ignore boundaries and redact or omit any ignored content.
 * `check-release`: run a full release readiness check that executes tests, collects coverage reports, runs a feature-flag audit, and validates documentation presence. It must exit non-zero on failure and emit a machine-readable JSON summary when `--json` is provided.
@@ -113,9 +115,9 @@ Product work fragments across docs, chat, and code. The goal is a single, audita
 
 These utilities are part of the CLI surface and should be callable from CI and from the TUI.
 
-## 5) Release Process Requirements
+## 5) Release Process Requirements (see wf-ca1)
 
-### 5.1 Manual cadence with code freeze mechanisms
+### 5.1 Manual cadence with code freeze mechanisms (see wf-ca1)
 
 * The CLI must support a recurring “release day” workflow that includes:
   * a code freeze mechanism (defined and enforced in-repo)
@@ -163,7 +165,7 @@ Decision (confirmed): start with “soft freeze” policy only; defer “hard fr
 
 * The CLI's `flag-audit` and `check-release` commands read this file to determine which flags are enabled by default and which are runtime-only toggles. If the project prefers language-embedded flags (e.g., `src/flags.ts`), the implementation must still provide an exported, machine-readable `config/flags.json` for auditing.
 
-## 6) Quality Gates / Definition of Done (confirmed)
+## 6) Quality Gates / Definition of Done (confirmed) (see wf-ba2.9)
 
 An issue is 'Done' when all of the following are true:
 
@@ -209,7 +211,7 @@ To make “90% core coverage” measurable without ambiguity, define “core cod
 
 Note: if the eventual implementation chooses a different layout, it must still provide an explicit, directory-based mapping of “core” vs “non-core”.
 
-### 6.2 Requirement: `main` is always releasable
+### 6.2 Requirement: `main` is always releasable (see wf-ba2.6.2, wf-ba2.8, wf-ba2.9)
 
 Definition: at all times, the current `main` branch MUST meet all of the following:
 
@@ -230,12 +232,12 @@ Definition: at all times, the current `main` branch MUST meet all of the followi
 
 * MUST NOT send any data excluded by `.gitignore`.
 
-### 7.3 Enforcement requirements (TBD)
+### 7.3 Enforcement requirements (TBD) (see wf-ba2.5, wf-ba2.5.1)
 
 * Define how the CLI determines what OpenCode is allowed to read/send.
 * Define how to fail safely (block action + explain why) when uncertain.
 
-## 8) Context Sharing: PM ↔ OpenCode (confirmed requirement)
+## 8) Context Sharing: PM ↔ OpenCode (confirmed requirement) (see wf-ba2.5, wf-ba2.5.2)
 
 ### 8.1 Requirement
 
@@ -320,7 +322,7 @@ Notes:
 * The “Ready Work” section should be generated from Beads state and limited to a configurable N.
 * Avoid embedding any content from ignored files; keep this as a structured summary.
 
-## 9) Scale & Performance (confirmed)
+## 9) Scale & Performance (confirmed) (see wf-ca1)
 
 ### 9.1 Target scale
 
@@ -331,7 +333,7 @@ Notes:
 * Acceptable latency for listing/plan generation.
 * Memory constraints (local machine assumptions).
 
-## 10) Risks & Mitigations
+## 10) Risks & Mitigations (see wf-ba2.5, wf-ba2.7, wf-ba2.8)
 
 * Risk: Duplicate issues → Mitigation: search/list before create; dedupe prompts.
 * Risk: Drift between docs and issues → Mitigation: link artifacts to issue IDs; reconciliation command.

@@ -1,4 +1,4 @@
-# PRD (MVP): Agentic PM TUI (tmux Companion)
+# PRD (MVP): Agentic PM TUI (tmux Companion) (see wf-ca1, wf-dt1)
 
 ## 1) Summary
 
@@ -11,6 +11,8 @@ A `tmux`-based (or similar) terminal UI that runs alongside OpenCode and the CLI
 This PRD complements the CLI scope in docs/dev/CLI_PRD.md. The CLI owns the “source of truth” actions (`bd` commands and file writes); the TUI is a focused operator interface for viewing state and triggering a small set of safe workflows.
 
 ## 2) Goals (MVP)
+
+Rule of Five policy: artifact authoring/review uses 5-pass prompts (see wf-ba2.1).
 
 - Make Beads issue state visible at a glance during daily PM work.
 - Optimize the intake → triage → plan → ship loop for a single PM.
@@ -32,14 +34,14 @@ This PRD complements the CLI scope in docs/dev/CLI_PRD.md. The CLI owns the “s
   - one pane running the TUI
 - The TUI should also run outside `tmux` (single process), but the layout assumptions should not break.
 
-### 4.2 Core views
+### 4.2 Core views (see wf-ca1)
 
 - Ready Work: shows output derived from `bd ready --json`.
 - Stale Work: shows output derived from `bd stale --days N --json`.
 - Issue Detail: shows a single issue (title, type, priority, status, deps, parent, notes).
 - Plan View: shows a proposed execution plan (including blockers) and what would be updated.
 
-### 4.3 Core actions
+### 4.3 Core actions (see wf-ca1)
 
 - Refresh: re-run underlying commands and re-render.
 - Open/inspect issue: navigate from lists to detail.
@@ -49,7 +51,7 @@ This PRD complements the CLI scope in docs/dev/CLI_PRD.md. The CLI owns the “s
   - Generate/update plan
   - Generate markdown artifacts (release notes/roadmap/changelog)
 
-### 4.4 Safety model
+### 4.4 Safety model (see wf-ba2.2.3, wf-ba2.5.1, wf-ba2.6.3)
 
 - Default: “preview-first”. The TUI shows what commands would run and what would change.
 - Any write action requires explicit confirmation.
@@ -69,14 +71,14 @@ This PRD complements the CLI scope in docs/dev/CLI_PRD.md. The CLI owns the “s
 - Reliability: errors from underlying commands must be surfaced clearly.
 - Observability: provide a simple log file for debugging (TBD location).
 
-## 6) Integration Design (MVP)
+## 6) Integration Design (MVP) (see wf-ca1, wf-dt1)
 
-### 6.1 Data sources
+### 6.1 Data sources (see wf-dt1)
 
 - `bd` CLI JSON output is canonical for issues.
 - Optional: `bv --robot-*` used to enrich planning views where available.
 
-### 6.2 Action execution
+### 6.2 Action execution (see wf-ca1, wf-ba2.8)
 
 - The TUI triggers CLI commands (or `bd` commands) rather than implementing business logic itself.
 - The TUI should capture and display:
@@ -84,7 +86,7 @@ This PRD complements the CLI scope in docs/dev/CLI_PRD.md. The CLI owns the “s
   - success/failure
   - concise summary of changes
 
-### 6.3 Context sharing with OpenCode
+### 6.3 Context sharing with OpenCode (see wf-ba2.5)
 
 - The TUI must support sharing context with OpenCode (details TBD), while still respecting ignore boundaries.
 
