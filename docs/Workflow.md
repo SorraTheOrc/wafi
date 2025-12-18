@@ -5,7 +5,7 @@
 This document describes a PRD-driven workflow for building new products and features using a mix of human collaborators (PM, design, engineering, QA) and agent collaborators (coding agents, doc agents, review agents). The workflow emphasizes:
 
 - A single source of truth in the repo (PRDs, issues, release notes)
-- Clear handoffs and auditability (who decided what, and why)
+- Clear handoffs and auditability (who decided what, and why) (see wf-ba2.8)
 - Keeping `main` always releasable via feature flags and quality gates
 
 By default, this workflow is tool-agnostic about the implementation stack (language, framework, test runner). It assumes this repository is the system of record.
@@ -16,9 +16,9 @@ You need the following available to follow this workflow end-to-end:
 
 - Repo access with permission to create/edit files under `docs/`.
 - A shared issue tracking mechanism.
-  - In this repo, use `bd` (beads) for issue tracking.
+  - In this repo, use `bd` (beads) for issue tracking. (see wf-dt1, wf-ca1)
 - An agreed PRD template.
-  - In this repo, use the OpenCode command `/prd` to create an PRD via Agent based interview (stored under `.opencode/command/prd.md`).
+  - In this repo, use the OpenCode command `/prd` to create an PRD via Agent based interview (stored under `.opencode/command/prd.md`). (see wf-ba2.3)
 - A minimal quality bar for “releasable `main`” (tests/coverage gates, feature-flag policy, and review policy).
 
 ## Setting up the environment
@@ -53,6 +53,8 @@ Summary: after this section, the rest of the steps can be executed by copy/pasti
 
 ## Steps
 
+Rule of Five policy: each major step below should be iterated 5 times before considering it complete (see wf-ba2.1).
+
 ### 1) Start with an intake brief
 
 The goal is to capture just enough context to decide whether you are creating something new or changing something that exists.
@@ -68,7 +70,7 @@ The goal is to capture just enough context to decide whether you are creating so
 
 Summary: you should now know whether the work needs a new PRD or an update to an existing PRD.
 
-### 2) Create or edit the PRD via interview
+### 2) Create or edit the PRD via interview (see wf-ba2.2, wf-ba2.3)
 
 Use an interview flow so that the PRD captures decisions and open questions rather than guessing.
 
@@ -107,7 +109,7 @@ PRDs are only useful when they drive execution. This step makes the PRD “real�
 
 Summary: the PRD is now approved and ready to be decomposed into executable work.
 
-### 4) Decompose the PRD into issues and milestones
+### 4) Decompose the PRD into issues and milestones (see wf-ba2, wf-ba2.2, wf-ba2.3, wf-ba2.4, wf-ba2.5, wf-ba2.6, wf-ba2.7, wf-ba2.8, wf-ba2.9)
 
 Turn the PRD into a sequence of deliverable increments. Prefer smaller vertical slices.
 
@@ -154,7 +156,7 @@ bd ready --json
 
 Summary: the PRD is now expressed as milestone-labeled issues with explicit dependencies, ready for parallel human/agent execution.
 
-### 4.1) Select the next most important issue (PM agent)
+### 4.1) Select the next most important issue (PM agent) (see wf-dt1, wf-ca1)
 
 The PM agent should treat `bd` as the source of truth for _state_ (open/in-progress/closed, priority, labels, assignee) and use `bv` for _impact-aware ranking_ (dependency graph analysis).
 
@@ -216,7 +218,7 @@ In this repo, agents should not hand-roll the design workflow. Instead, use:
 
 `/design` (defined in `.opencode/command/design.md`)
 
-### 5) Implement in small, releasable increments
+### 5) Implement in small, releasable increments (see wf-ba2.6, wf-ba2.5, wf-ba2.2)
 
 Implementation should keep `main` always releasable.
 
@@ -256,11 +258,11 @@ Quality and releaseability rules (recommended):
 
 In this repo, agents should not hand-roll the implementation workflow. Instead, use:
 
-`/implement` (defined in `.opencode/command/implement.md`)
+`/implement` (defined in `.opencode/command/implement.md`) (see wf-ba2.6.1, wf-ba2.6.2, wf-ba2.6.3, wf-ba2.6.4)
 
 Summary: work progresses issue-by-issue while preserving a stable `main`.
 
-### 6) Review, merge, and close the loop
+### 6) Review, merge, and close the loop (see wf-ba2.6, wf-ba2.8, wf-ba2.9)
 
 Each increment should end with a reviewable change and a merged PR.
 
