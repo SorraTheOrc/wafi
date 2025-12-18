@@ -47,10 +47,6 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 
 Then source it (for bash: `source ~/.bashrc`) and run `npm link` again.
 
-**Troubleshooting: Name Conflicts**
-
-If `wafi --help` shows unexpected output, you may have a conflicting `wafi` command on your PATH. Check with `which wafi`.
-
 ## Usage
 
 - Help: `node dist/index.js --help` (or after linking via `npm link`, just `wafi --help`)
@@ -63,8 +59,6 @@ If `wafi --help` shows unexpected output, you may have a conflicting `wafi` comm
   wafi prd --out /tmp/stub.md --json
   ```
 - Verbose logging: add `--verbose` (writes debug to stderr).
-
-To expose `wafi` on your PATH locally, run `npm link` after `npm run build`. That symlinks the built binary (`dist/index.js`) into your global npm bin (honoring the prefix above), so `wafi ...` works from any directory. Use `npm unlink wafi` to remove it later.
 
 ## Development
 
