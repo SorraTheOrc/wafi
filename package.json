@@ -1,9 +1,9 @@
 {
-  "name": "pm-cli",
+  "name": "wafi",
   "version": "0.1.0",
-  "description": "pm CLI scaffold (Node/TypeScript)",
+  "description": "WAFI CLI scaffold (Workflow Alien Intelligence)",
   "bin": {
-    "pm": "dist/index.js"
+    "wafi": "dist/index.js"
   },
   "type": "module",
   "scripts": {

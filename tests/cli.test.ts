@@ -10,19 +10,19 @@ function tmpFile(name: string) {
   return join(tmpdir(), name);
 }
 
-test('pm --help shows prd', async () => {
+test('wafi --help shows prd', async () => {
   const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), '--help']);
   expect(exitCode).toBe(0);
   expect(stdout).toContain('prd');
 });
 
-test('pm prd --help works', async () => {
+test('wafi prd --help works', async () => {
   const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), 'prd', '--help']);
   expect(exitCode).toBe(0);
   expect(stdout).toContain('--out');
 });
 
-test('missing --out exits 2', async () => {
+test('wafi: missing --out exits 2', async () => {
   const { exitCode, stderr } = await execa(CLI[0], [...CLI.slice(1), 'prd'], { reject: false });
   expect(exitCode).toBe(2);
   expect(stderr).toMatch(/--out|Missing/);

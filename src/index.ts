@@ -8,8 +8,8 @@ import { handleError } from './lib/io.js';
 export async function run(argv = process.argv.slice(2)): Promise<number> {
   const program = new Command();
   program
-    .name('pm')
-    .description('pm CLI scaffold')
+    .name('wafi')
+    .description('WAFI CLI scaffold (Workflow Alien Intelligence)')
     .option('--json', 'Emit JSON output')
     .option('--verbose', 'Emit debug logs to stderr')
     .showHelpAfterError();

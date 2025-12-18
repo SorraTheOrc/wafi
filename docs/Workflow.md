@@ -85,8 +85,8 @@ Invocation pattern (OpenCode TUI):
 
 ```bash
 # Optional: seed the PRD interview from an existing beads issue.
-# Use either a project issue id (e.g., beads-testing-73k) or a short id (e.g., bd-123) if your setup uses that format.
-export ISSUE_ID="beads-testing-73k"
+# Use either a project issue id (e.g., wafi-73k) or a short id (e.g., bd-123) if your setup uses that format.
+export ISSUE_ID="wafi-73k"
 
 # In the OpenCode TUI, run:
 # /prd $PRD_PATH $ISSUE_ID
