@@ -3,10 +3,29 @@
 WAFI is a repo-first workflow tool intended to help humans make sense of the jumble that “vibe coding” produces.
 
 WAFI is not really an acronym:
+
 - `W` / `F`: Workflow
 - `A` / `I`: Alien Intelligence (NOT Artificial Intelligence)
 
 The fact that it’s jumbled into `WAFI` is the point. It also nods affectionately at the nautical acronym, WAIF ("Wind Assisted Freaking Idiot"), a tongue-in-cheek term used by sailors for someone relying too much on wind power - here pointing at humans or agents relying too much on one another.
+
+## Approach
+
+This is an experimental project — expect rapid change. This section is intended to stay current as the workflow, tooling, and conventions morph.
+
+### AI-Assisted Development
+
+WAFI is designed around “agent + human” collaboration: agents propose changes, run constrained tasks, and keep a high-signal paper trail in the repo; humans review, steer, and ship.
+
+For the detailed workflow (including how we structure agent work, track progress, and validate changes), see [`docs/dev/Workflow.md`](docs/dev/Workflow.md).
+
+### Agent Personas + Guided Commands
+
+We provide multiple agent personas intended to drive different development phases (exploration, implementation, review, release, etc.). Alongside that, we provide workflow-oriented commands that act as guardrails — telling agents what to do next, how to format output, and how to integrate with the repo’s conventions.
+
+### Human CLI + OpenCode
+
+Humans interact with and inspect agent work via a CLI tool (this repo’s `wafi` command). That CLI is designed to integrate with **OpenCode**, so humans can drive the same agent workflows directly through a consistent interface.
 
 ## Features
 
