@@ -57,9 +57,10 @@ Then source it (for bash: `source ~/.bashrc`) and run `npm link` again.
 
 ## Development
 
-- Issue tracking: this repo uses **Beads** (`bd`) for all work tracking. See https://github.com/steveyegge/beads
-- Scheduling: this repo uses **beads-viewer** (`bv`) to schedule and prioritize work using dependency graph insights. See https://github.com/Dicklesworthstone/beads_viewer
-- Agent CLI: recommended tool is **OpenCode** for agent-driven workflows. See https://github.com/opencode-ai/opencode
+- Issue tracking: this repo uses **Beads** (`bd`) for all work tracking. See [steveyegge/beads](https://github.com/steveyegge/beads)
+- Scheduling: this repo uses **beads-viewer** (`bv`) to schedule and prioritize work using dependency graph insights. See [Dicklesworthstone/beads_viewer](https://github.com/Dicklesworthstone/beads_viewer)
+- Docs: developer-focused documentation lives in [`docs/dev`](docs/dev)
+- Agent CLI: recommended tool is **OpenCode** for agent-driven workflows. See [opencode-ai/opencode](https://github.com/opencode-ai/opencode)
 
 ## Testing
 
