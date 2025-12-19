@@ -33,7 +33,7 @@ fi
 export BD_ACTOR="$1"
 export BEADS_NO_DAEMON=1
 
-workspace_dir="./${BD_ACTOR}"
+workspace_dir="./${BD_ACTOR}_Worktree"
 
 if ! command -v git >/dev/null 2>&1; then
   echo "git is required but was not found in PATH." >&2
