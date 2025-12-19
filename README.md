@@ -1,4 +1,4 @@
-# WAFI
+# WAIF
 
 WAIF is a repo-first workflow tool intended to help humans make sense of the jumble that “vibe coding” produces.
 
@@ -25,9 +25,9 @@ We provide multiple agent personas intended to drive different development phase
 
 ### CLI-First Interaction
 
-The project provides a CLI tool (`wafi`) that humans, agents, and even old-school systems can use to interact with both agents and Beads (issue tracker). The CLI is a thin layer on top of the underlying tools used in this workflow. Its use is optional, but it provides a consistent interface and helpers for human+agent teams.
+The project provides a CLI tool (`waif`) that humans, agents, and even old-school systems can use to interact with both agents and Beads (issue tracker). The CLI is a thin layer on top of the underlying tools used in this workflow. Its use is optional, but it provides a consistent interface and helpers for human+agent teams.
 
-When interacting with agents, the `wafi` CLI tool is designed to integrate with **OpenCode** (an open source agent framework). The CLI automates invoking agents with pre-defined prompts and handling outputs according to the workflow conventions. However, use of the CLI is optional; humans can also interact with agents directly via chat or other interfaces.
+When interacting with agents, the `waif` CLI tool is designed to integrate with **OpenCode** (an open source agent framework). The CLI automates invoking agents with pre-defined prompts and handling outputs according to the workflow conventions. However, use of the CLI is optional; humans can also interact with agents directly via chat or other interfaces.
 
 #### Slash Commands
 
@@ -39,7 +39,7 @@ When interacting with agents, the `wafi` CLI tool is designed to integrate with 
 
 ## WAIF CLI Features
 
-- `wafi next`: returns the top open, unblocked issue with a concise human rationale; supports `--json` output for automation.
+- `waif next`: returns the top open, unblocked issue with a concise human rationale; supports `--json` output for automation.
 
 
 ## Install
@@ -51,11 +51,11 @@ npm install
 npm run build
 ```
 
-This installs dependencies and builds the `wafi` entrypoint to `dist/index.js`. For local dev without build, you can run `npm run start` (tsx).
+This installs dependencies and builds the `waif` entrypoint to `dist/index.js`. For local dev without build, you can run `npm run start` (tsx).
 
 ### Global Install (npm link)
 
-After `npm run build`, run `npm link` to make the `wafi` command available globally. This symlinks `dist/index.js` into your npm global bin directory.
+After `npm run build`, run `npm link` to make the `waif` command available globally. This symlinks `dist/index.js` into your npm global bin directory.
 
 **If you encounter permission errors**, configure a user-writable npm prefix:
 
@@ -76,7 +76,7 @@ Then source it (for bash: `source ~/.bashrc`) and run `npm link` again.
 
 ## Usage
 
-- Help: `node dist/index.js --help` (or after linking via `npm link`, just `wafi --help`)
+- Help: `node dist/index.js --help` (or after linking via `npm link`, just `waif --help`)
 - PRD stub (human output):
   ```bash
   wafi prd --out /tmp/stub.md

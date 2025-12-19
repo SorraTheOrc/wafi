@@ -10,7 +10,7 @@ function makeIssues(path: string, issues: any[]) {
   writeFileSync(path, issues.map((i) => JSON.stringify(i)).join('\n') + '\n', 'utf8');
 }
 
-describe('wafi next', () => {
+describe('waif next', () => {
   it('picks highest bv score when provided', async () => {
     const tmpIssues = join(tmpdir(), `issues-${Date.now()}.jsonl`);
     makeIssues(tmpIssues, [

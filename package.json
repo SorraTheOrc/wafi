@@ -1,9 +1,9 @@
 {
-  "name": "wafi",
+  "name": "waif",
   "version": "0.1.0",
   "description": "WAIF CLI scaffold (Workflow Alien Intelligence)",
   "bin": {
-    "wafi": "dist/index.js"
+    "waif": "dist/index.js"
   },
   "type": "module",
   "scripts": {
