@@ -1,0 +1,51 @@
+- Problem
+  - `waif prd` supports prompt ingestion and can seed from issues, but it is not yet explicitly wired to the OpenCode PRD Agent workflow (`/prd`) described in `.opencode/command/prd.md`.
+  - Cross-linking expectations currently differ:
+    - PRD Agent spec suggests using `bd comment <id> "Linked PRD: <path>"` plus `bd update <id> --external-ref "PRD: <path>"`.
+    - CLI currently updates the issue description with a `Linked PRD: <path>` line.
+  - There is no single end-to-end command that takes the user from “I have a prompt/issue” to “I have a completed PRD” via an interactive agent/human interview.
+
+- Users
+  - Primary: PM/agent who wants one consistent PRD authoring workflow (CLI + agent) with reliable traceability.
+  - Secondary: automation/TUI that depends on stable link surfaces.
+
+- Success criteria
+  - Decide and document the canonical cross-link mechanism (description vs comment vs external-ref).
+  - Ensure `waif prd` and `/prd` workflow produce the same links by default.
+  - Ensure idempotence: re-running does not create duplicate links/comments.
+
+- Functional requirements (new)
+  - `waif prd` provides an interactive mode that *invokes the OpenCode PRD Agent* (`/prd`) so the user (human) and/or a coding agent can complete the PRD through interview.
+  - The interactive flow must:
+    - support starting from either a `--prompt`/`--prompt-file` OR a `--issue <id>` seed
+    - write/update the PRD file on disk (`docs/dev/..._PRD.md`)
+    - ensure two-way traceability between the PRD and the Beads issue
+    - allow a human to answer interview questions (non-autonomous) OR allow an agent to drive the interview (autonomous), with clear UX distinction
+
+- Constraints
+  - Must remain deterministic and audit-friendly:
+    - any automated edits must be written to disk (no hidden changes)
+    - the resulting PRD must contain `Source issue: <id>` when an issue id is used
+    - linking must be idempotent
+  - Must not break existing `waif prd --out ...` stub behavior.
+  - Must respect ignore boundaries (OpenCode rules) when passing context to the agent.
+
+- Related docs
+  - `.opencode/command/prd.md`
+  - `.opencode/command/intake.md`
+  - `docs/Workflow.md`
+
+- Related issues
+  - `wf-ba2.3.1` (Minimal PRD generator from prompt input)
+  - `wf-ba2.2.2` (Prompt input modes)
+
+- Open questions
+  1. What is the canonical way for a CLI process to invoke OpenCode `/prd`? Options:
+     - launch `opencode` with a pre-filled command string
+     - print a next-step instruction for the user to run in OpenCode (fallback)
+     - integrate via an OpenCode API/MCP if available
+  2. Should the CLI always run in “instruction emission” mode (prints `/prd ...`) vs attempting to spawn an interactive OpenCode session?
+  3. Which link mechanism becomes canonical: issue description line vs `bd comment` vs `--external-ref`?
+
+- Proposed next step
+  - Define the integration approach (spawn vs instruction-only vs API), then implement the interactive `waif prd` mode and align cross-linking semantics across CLI + agent + docs.
