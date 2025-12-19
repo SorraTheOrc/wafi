@@ -1,6 +1,6 @@
 # WAFI
 
-WAFI is a repo-first workflow tool intended to help humans make sense of the jumble that “vibe coding” produces.
+WAIF is a repo-first workflow tool intended to help humans make sense of the jumble that “vibe coding” produces.
 
 WAFI is not really an acronym:
 
@@ -15,7 +15,7 @@ This is an experimental project — expect rapid change. This section is intende
 
 ### AI-Assisted Development
 
-WAFI is designed around “agent + human” collaboration: agents propose changes, run constrained tasks, and keep a high-signal paper trail in the repo; humans review, steer, and ship.
+WAIF is designed around “agent + human” collaboration: agents propose changes, run constrained tasks, and keep a high-signal paper trail in the repo; humans review, steer, and ship.
 
 For the detailed workflow (including how we structure agent work, track progress, and validate changes), see [`docs/Workflow.md`](docs/Workflow.md).
 
@@ -31,15 +31,15 @@ When interacting with agents, the `wafi` CLI tool is designed to integrate with 
 
 #### Slash Commands
 
-[OpenCode Slash Commands](https://opencode.ai/docs/commands/) are a way to define short commands that guide agents in their completion of specific tasks. WAFI defines several slash commands which can be run directly or via the CLI tool (using `wafi COMMAND [ARGS]`). These commands are defined in [`.opencode/command`](.opencode/command) and include:
+[OpenCode Slash Commands](https://opencode.ai/docs/commands/) are a way to define short commands that guide agents in their completion of specific tasks. WAIF defines several slash commands which can be run directly or via the CLI tool (using `wafi COMMAND [ARGS]`). These commands are defined in [`.opencode/command`](.opencode/command) and include:
 
 - [`/prd`](.opencode/command/prd.md): Creates or edits a PRD through a short interview; optionally seeds from a Beads issue id and/or a target file path, then writes the PRD in a standard Markdown outline.
 - [`/design`](.opencode/command/design.md): Runs an interview + drafting loop to create or improve design notes for a single Beads issue id via `bd update --design`.
 - [`/implement`](.opencode/command/implement.md): Implements a Beads issue end-to-end from an id
 
-## WAFI CLI Features
+## WAIF CLI Features
 
-- `waif next`: returns the top open, unblocked issue with a concise human rationale; supports `--json` output for automation.
+- `wafi next`: returns the top open, unblocked issue with a concise human rationale; supports `--json` output for automation.
 
 
 ## Install
