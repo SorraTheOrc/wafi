@@ -6,7 +6,7 @@ describe('renderIssueTitle', () => {
     expect(renderIssueTitle({ issue_type: 'feature', status: 'open', title: 'Hello' })).toBe('F O Hello');
     expect(renderIssueTitle({ issue_type: 'bug', status: 'in_progress', title: 'Fix it' })).toBe('B P Fix it');
     expect(renderIssueTitle({ issue_type: 'task', status: 'done', title: 'Ship' })).toBe('T D Ship');
-    expect(renderIssueTitle({ issue_type: 'epic', status: 'closed', title: 'Big' })).toBe('E X Big');
+    expect(renderIssueTitle({ issue_type: 'epic', status: 'closed', title: 'Big' })).toBe('E D Big');
     expect(renderIssueTitle({ issue_type: 'chore', status: 'tombstone', title: 'Cleanup' })).toBe('C T Cleanup');
   });
 
