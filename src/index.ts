@@ -11,7 +11,7 @@ export async function run(argv = process.argv.slice(2)): Promise<number> {
   const program = new Command();
   program
     .name('wafi')
-    .description('WAFI CLI scaffold (Workflow Alien Intelligence)')
+    .description('WAIF CLI scaffold (Workflow Alien Intelligence)')
     .option('--json', 'Emit JSON output')
     .option('--verbose', 'Emit debug logs to stderr')
     .showHelpAfterError();
