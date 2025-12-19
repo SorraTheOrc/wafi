@@ -2,7 +2,7 @@
 
 WAIF is a repo-first workflow tool intended to help humans make sense of the jumble that “vibe coding” produces.
 
-WAFI is not really an acronym:
+WAIF is not really an acronym:
 
 - `W` / `F`: Workflow
 - `A` / `I`: Alien Intelligence (NOT Artificial Intelligence)
