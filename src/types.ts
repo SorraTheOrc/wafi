@@ -1,6 +1,12 @@
+export type PrdPromptSource = 'arg' | 'stdin' | 'file';
+
 export type PrdResult = {
   out: string;
   stub: boolean;
+  prompt?: {
+    source: PrdPromptSource;
+    length: number;
+  };
 };
 
 export type ErrorPayload = {

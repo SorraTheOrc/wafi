@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { execa } from 'execa';
@@ -62,6 +62,56 @@ test('prd writes stub and reports human output', async () => {
   expect(exitCode).toBe(0);
   expect(readFileSync(outPath, 'utf8')).toMatch(/^# PRD/);
   expect(stdout).toContain('Wrote PRD stub');
+});
+
+test('prd accepts prompt via arg', async () => {
+  const outPath = tmpFile(`prompt-arg-${Date.now()}.md`);
+  const prompt = 'Write a PRD for adding input modes.';
+  const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), 'prd', '--out', outPath, '--prompt', prompt, '--json']);
+  expect(exitCode).toBe(0);
+  const payload = JSON.parse(stdout.trim());
+  expect(payload.prompt.source).toBe('arg');
+  expect(payload.prompt.length).toBe(prompt.length);
+  expect(readFileSync(outPath, 'utf8')).toContain(prompt);
+});
+
+test('prd accepts prompt via file', async () => {
+  const outPath = tmpFile(`prompt-file-${Date.now()}.md`);
+  const promptPath = tmpFile(`prompt-${Date.now()}.txt`);
+  const prompt = 'Prompt from file.';
+  writeFileSync(promptPath, prompt, 'utf8');
+
+  const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), 'prd', '--out', outPath, '--prompt-file', promptPath, '--json']);
+  expect(exitCode).toBe(0);
+  const payload = JSON.parse(stdout.trim());
+  expect(payload.prompt.source).toBe('file');
+  expect(payload.prompt.length).toBe(prompt.length);
+  expect(readFileSync(outPath, 'utf8')).toContain(prompt);
+});
+
+test('prd accepts prompt via stdin when --prompt -', async () => {
+  const outPath = tmpFile(`prompt-stdin-${Date.now()}.md`);
+  const prompt = 'Prompt via stdin.';
+  const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), 'prd', '--out', outPath, '--prompt', '-', '--json'], {
+    input: prompt,
+  });
+  expect(exitCode).toBe(0);
+  const payload = JSON.parse(stdout.trim());
+  expect(payload.prompt.source).toBe('stdin');
+  expect(payload.prompt.length).toBe(prompt.length);
+  expect(readFileSync(outPath, 'utf8')).toContain(prompt);
+});
+
+test('prd errors if both --prompt and --prompt-file provided', async () => {
+  const outPath = tmpFile(`prompt-both-${Date.now()}.md`);
+  const promptPath = tmpFile(`prompt-both-${Date.now()}.txt`);
+  writeFileSync(promptPath, 'file prompt', 'utf8');
+
+  const { exitCode, stderr } = await execa(CLI[0], [...CLI.slice(1), 'prd', '--out', outPath, '--prompt', 'arg prompt', '--prompt-file', promptPath], {
+    reject: false,
+  });
+  expect(exitCode).toBe(2);
+  expect(stderr).toContain('Use only one of --prompt or --prompt-file');
 });
 
 test('prd json output', async () => {
