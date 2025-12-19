@@ -4,7 +4,6 @@ agent: build
 #model: GPT-5.1-Codex-max
 ---
 
-
 You are implementing a Beads issue in this repository.
 
 Argument handling:
@@ -53,6 +52,29 @@ Process:
    - Restate the acceptance criteria and constraints from the issue JSON.
    - Identify dependencies/blockers; if blocked, explain what is missing and ask the user how to proceed.
 
+1.1 Definition gate (must do before implementation)
+
+    Before writing any code, confirm the Beads issue is sufficiently well-defined to implement.
+
+    Minimum definition checklist:
+
+    - Clear scope: what is in-scope vs out-of-scope
+    - Concrete acceptance criteria (testable, not just aspirational)
+    - Constraints/compatibility expectations (if any)
+    - Obvious unknowns captured as questions (or resolved)
+
+    If the issue is not sufficiently defined:
+
+    - Stop implementation.
+    - Work through the **intake brief interview** first to fully define the work.
+       - Use `.opencode/command/intake.md` as the guide for the questions and searches.
+       - IMPORTANT: when intake is performed as part of `/implement`, it must **always update the existing issue `$1`**. Do **not** create a new Beads issue.
+       - After the intake interview + repo/Beads search, update the current issue so it becomes actionable:
+          - Prefer updating the issue `description` and/or `acceptance` with the intake brief output.
+          - Example: `bd update $1 --description "<intake brief markdown>" --json`
+          - Ensure the updated issue contains: problem, users, success criteria, constraints, related docs/issues, clarifying questions, and testable acceptance criteria.
+    - Only resume `/implement` once the work item is clearly actionable.
+
 2. Create a working branch
 
    - If you are already on a topic branch for this issue, keep it.
@@ -77,6 +99,7 @@ Process:
    - Run the most specific checks available for the changed area (tests/lint/build).
 
 6. Update the docs
+
    - If the issue has linked PRDs or design docs, update them with a summary of the work done, and references to imprtant files altered during the work.
    - Update the `docs/workflow.md` if the issue changes any part of the development workflow.
    - Update any relevant README.md files to reflect changes in usage, setup, or configuration.
@@ -103,15 +126,15 @@ Process:
 
 Once the user confirms the PR is merged:
 
-   - Switch to `main` and pull the latest changes.
-   - Delete the working branch locally and remotely.
-   - Close the beads issue with a reason of "Closed PR #<pr-number>".
-   - After the PR is merged, close the issue on `main`:
-     - `bd close $1 --reason "Done" --json`
-     - `bd sync`
-   - Move the PRD (if one exists) to `docs/dev/implemented`
-   - Output a completion statement, complete with a summary of the work done, including a link to the updated documentation (on github)
-   - Add a user focused summary to the CHANGELOG.md file
-   - Commit and push
+- Switch to `main` and pull the latest changes.
+- Delete the working branch locally and remotely.
+- Close the beads issue with a reason of "Closed PR #<pr-number>".
+- After the PR is merged, close the issue on `main`:
+  - `bd close $1 --reason "Done" --json`
+  - `bd sync`
+- Move the PRD (if one exists) to `docs/dev/implemented`
+- Output a completion statement, complete with a summary of the work done, including a link to the updated documentation (on github)
+- Add a user focused summary to the CHANGELOG.md file
+- Commit and push
 
 Start now: Ask the user for the first implementation instruction if the next concrete step is not obvious.
