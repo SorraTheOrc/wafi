@@ -1,8 +1,8 @@
-# WAFI
+# WAIF
 
-WAFI is a repo-first workflow tool intended to help humans make sense of the jumble that “vibe coding” produces.
+WAIF is a repo-first workflow tool intended to help humans make sense of the jumble that “vibe coding” produces.
 
-WAFI is not really an acronym:
+WAIF is not really an acronym:
 
 - `W` / `F`: Workflow
 - `A` / `I`: Alien Intelligence (NOT Artificial Intelligence)
@@ -15,7 +15,7 @@ This is an experimental project — expect rapid change. This section is intende
 
 ### AI-Assisted Development
 
-WAFI is designed around “agent + human” collaboration: agents propose changes, run constrained tasks, and keep a high-signal paper trail in the repo; humans review, steer, and ship.
+WAIF is designed around “agent + human” collaboration: agents propose changes, run constrained tasks, and keep a high-signal paper trail in the repo; humans review, steer, and ship.
 
 For the detailed workflow (including how we structure agent work, track progress, and validate changes), see [`docs/Workflow.md`](docs/Workflow.md).
 
@@ -25,21 +25,22 @@ We provide multiple agent personas intended to drive different development phase
 
 ### CLI-First Interaction
 
-The project provides a CLI tool (`wafi`) that humans, agents, and even old-school systems can use to interact with both agents and Beads (issue tracker). The CLI is a thin layer on top of the underlying tools used in this workflow. Its use is optional, but it provides a consistent interface and helpers for human+agent teams.
+The project provides a CLI tool (`waif`) that humans, agents, and even old-school systems can use to interact with both agents and Beads (issue tracker). The CLI is a thin layer on top of the underlying tools used in this workflow. Its use is optional, but it provides a consistent interface and helpers for human+agent teams.
 
-When interacting with agents, the `wafi` CLI tool is designed to integrate with **OpenCode** (an open source agent framework). The CLI automates invoking agents with pre-defined prompts and handling outputs according to the workflow conventions. However, use of the CLI is optional; humans can also interact with agents directly via chat or other interfaces.
+When interacting with agents, the `waif` CLI tool is designed to integrate with **OpenCode** (an open source agent framework). The CLI automates invoking agents with pre-defined prompts and handling outputs according to the workflow conventions. However, use of the CLI is optional; humans can also interact with agents directly via chat or other interfaces.
 
 #### Slash Commands
 
-[OpenCode Slash Commands](https://opencode.ai/docs/commands/) are a way to define short commands that guide agents in their completion of specific tasks. WAFI defines several slash commands which can be run directly or via the CLI tool (using `wafi COMMAND [ARGS]`). These commands are defined in [`.opencode/command`](.opencode/command) and include:
+[OpenCode Slash Commands](https://opencode.ai/docs/commands/) are a way to define short commands that guide agents in their completion of specific tasks. WAIF defines several slash commands which can be run directly or via the CLI tool (using `wafi COMMAND [ARGS]`). These commands are defined in [`.opencode/command`](.opencode/command) and include:
 
 - [`/prd`](.opencode/command/prd.md): Creates or edits a PRD through a short interview; optionally seeds from a Beads issue id and/or a target file path, then writes the PRD in a standard Markdown outline.
 - [`/design`](.opencode/command/design.md): Runs an interview + drafting loop to create or improve design notes for a single Beads issue id via `bd update --design`.
 - [`/implement`](.opencode/command/implement.md): Implements a Beads issue end-to-end from an id
 
-## WAFI CLI Features
+## WAIF CLI Features
 
-- no features implemented yet, it's just the CLI scaffold
+- `waif next`: returns the top open, unblocked issue with a concise human rationale; supports `--json` output for automation.
+
 
 ## Install
 
@@ -50,11 +51,11 @@ npm install
 npm run build
 ```
 
-This installs dependencies and builds the `wafi` entrypoint to `dist/index.js`. For local dev without build, you can run `npm run start` (tsx).
+This installs dependencies and builds the `waif` entrypoint to `dist/index.js`. For local dev without build, you can run `npm run start` (tsx).
 
 ### Global Install (npm link)
 
-After `npm run build`, run `npm link` to make the `wafi` command available globally. This symlinks `dist/index.js` into your npm global bin directory.
+After `npm run build`, run `npm link` to make the `waif` command available globally. This symlinks `dist/index.js` into your npm global bin directory.
 
 **If you encounter permission errors**, configure a user-writable npm prefix:
 
@@ -75,7 +76,7 @@ Then source it (for bash: `source ~/.bashrc`) and run `npm link` again.
 
 ## Usage
 
-- Help: `node dist/index.js --help` (or after linking via `npm link`, just `wafi --help`)
+- Help: `node dist/index.js --help` (or after linking via `npm link`, just `waif --help`)
 - PRD stub (human output):
   ```bash
   wafi prd --out /tmp/stub.md

@@ -76,7 +76,7 @@ Example: Automating intake → PRD
 
 ```bash
 # Create an intake issue, write PRD, and link them in one step
-wafi intake --title "Feature X: Intake brief" \
+waif intake --title "Feature X: Intake brief" \
   --desc "Problem summary and success criteria..." \
   --prd docs/dev/feature_x_PRD.md
 
@@ -108,7 +108,7 @@ Invocation pattern (OpenCode TUI):
 ```bash
 # Optional: seed the PRD interview from an existing beads issue.
 # Use either a project issue id (e.g., wafi-73k) or a short id (e.g., bd-123) if your setup uses that format.
-export ISSUE_ID="wafi-73k"
+export ISSUE_ID="waif-73k"
 
 # In the OpenCode TUI, run:
 # /prd $PRD_PATH $ISSUE_ID
