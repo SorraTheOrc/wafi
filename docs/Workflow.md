@@ -66,9 +66,29 @@ The goal is to capture just enough context to decide whether you are creating so
   - Search the repo for related PRDs/specs and surface likely duplicates.
   - Search the issue tracker for related items.
   - Produce a short list of clarifying questions.
-  - Create an issue to track the creation of the brief. Record all information in the issue description and link any apporpriate PRDs, specs and existing issues.
+  - Create an issue to track the creation of the brief. Record all information in the issue description and link any appropriate PRDs, specs and existing issues.
 
 Summary: you should now know whether the work needs a new PRD or an update to an existing PRD.
+
+Example: Automating intake → PRD
+
+- Using the CLI, the intake command creates the beads issue and (optionally) writes a PRD and cross-links both artifacts.
+
+```bash
+# Create an intake issue, write PRD, and link them in one step
+wafi intake --title "Feature X: Intake brief" \
+  --desc "Problem summary and success criteria..." \
+  --prd docs/dev/feature_x_PRD.md
+
+# This sequence does:
+# 1) bd create "Feature X: Intake brief" -t feature -p 2 --description "..." --json
+# 2) write PRD at docs/dev/feature_x_PRD.md containing "Source issue: <new-id>"
+# 3) bd update <new-id> --body-file - < docs/dev/feature_x_PRD.md  (adds "Linked PRD: docs/dev/feature_x_PRD.md")
+```
+
+Notes:
+- The tool prefers calling `bd` for issue creation and update; when `bd` is unavailable it falls back to a deterministic edit of `.beads/issues.jsonl` and prints exact manual steps for the user.
+- The cross-link is idempotent: re-running the same command will not add duplicate `Linked PRD` lines.
 
 ### 2) Create or edit the PRD via interview (see wf-ba2.2, wf-ba2.3)
 
