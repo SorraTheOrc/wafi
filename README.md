@@ -39,7 +39,7 @@ When interacting with agents, the `wafi` CLI tool is designed to integrate with 
 
 ## WAFI CLI Features
 
-- `waif next`: returns the top open, unblocked issue with a concise human rationale; supports `--json` output for automation. A planned enhancement (`--number`/`-n`) will allow returning multiple suggestions in a compact table (ID, Title, Priority, #blocked) when requested.
+- `waif next`: returns the top open, unblocked issue with a concise human rationale; supports `--json` output for automation.
 
 
 ## Install
