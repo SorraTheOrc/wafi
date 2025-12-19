@@ -281,11 +281,12 @@ git push                # Push to remote
 7. **Hand off** - Provide context for next session
 
 **CRITICAL RULES:**
+
 - Work is NOT complete until `git push` succeeds
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
-- When using backticks in strings that are to be passed as arguments to shell commands, escape them properly to avoid errors
+- When using backticks in strings that are to be passed as arguments to shell commands (e.g. waif, gh), escape them properly to avoid errors
 
 ## Project structure
 
