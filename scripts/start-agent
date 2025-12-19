@@ -11,7 +11,7 @@ Bootstraps a per-agent workspace directory and initializes waif.
 Steps:
   1) Sets BD_ACTOR to NAME
   2) Creates (or reuses) a git worktree at ./$BD_ACTOR
-     - Creates/uses branch "${BD_ACTOR}_Workspace"
+    - Creates/uses branch "${BD_ACTOR}_Worktree"
   3) Runs: waif init $BD_ACTOR
 
 Notes:
@@ -31,6 +31,7 @@ if [[ -z "${1:-}" ]]; then
 fi
 
 export BD_ACTOR="$1"
+export BEADS_NO_DAEMON=1
 
 workspace_dir="./${BD_ACTOR}"
 
@@ -47,7 +48,7 @@ fi
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
-branch="${BD_ACTOR}_Workspace"
+branch="${BD_ACTOR}_Worktree"
 
 worktree_branch_path() {
   local target_branch="$1"
