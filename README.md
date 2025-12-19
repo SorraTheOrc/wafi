@@ -42,6 +42,11 @@ When interacting with agents, the `waif` CLI tool is designed to integrate with 
 - `waif next`: prints three human sections (In Progress table, Recommended Summary table, Recommended Detail) and supports `--json` output for automation.
 - `waif --version` (alias: `-v`): prints the CLI version and exits.
 
+### Symbols config
+
+Some CLI and library output uses configurable ASCII-safe symbols.
+Defaults are defined in `config/symbols.json`.
+
 ## Install
 
 From the repo root:

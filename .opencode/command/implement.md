@@ -121,6 +121,7 @@ Process:
    - Keep the issue in `in_progress` until the PR is merged.
    - Run `bd sync` before ending the session.
      - If there are no Beads changes to commit (or you are on an ephemeral branch without upstream), use `bd sync --flush-only`.
+   - Output a summary of the goal of the issue and the work done, including a brief summary of changes to each file. Including a link to the PR. Provide hints on how to test any new functionality locally. Ask the user to review the PR and merge when ready.
 
 9. After merge
 

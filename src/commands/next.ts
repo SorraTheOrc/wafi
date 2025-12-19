@@ -4,6 +4,7 @@ import { spawnSync } from 'child_process';
 import { Command } from 'commander';
 import { CliError } from '../types.js';
 import { emitJson, logStdout } from '../lib/io.js';
+import { renderIssueTitle } from '../lib/issueTitle.js';
 import { renderIssuesTable } from '../lib/table.js';
 
 const ANSI = {
@@ -326,8 +327,8 @@ export function createNextCommand() {
           }
         }
 
-        const title = top.issue.title ?? '(no title)';
-        logStdout(`${top.issue.id}: ${title}`);
+        const rendered = renderIssueTitle(top.issue);
+        logStdout(`${top.issue.id}: ${rendered}`);
       }
 
     });
