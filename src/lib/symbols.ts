@@ -16,7 +16,23 @@ let cached: SymbolsConfig | null = null;
 
 export function getDefaultSymbols(): SymbolsConfig {
   if (cached) return cached;
-  const raw = readFileSync(DEFAULT_SYMBOLS_PATH, 'utf8');
-  cached = JSON.parse(raw) as SymbolsConfig;
+
+  try {
+    const raw = readFileSync(DEFAULT_SYMBOLS_PATH, 'utf8');
+    cached = JSON.parse(raw) as SymbolsConfig;
+  } catch (error) {
+    // Fall back to an empty symbols configuration if the file cannot be read or parsed.
+    // This avoids uncaught exceptions while still returning a valid SymbolsConfig shape.
+    // eslint-disable-next-line no-console
+    console.warn(
+      `Failed to load default symbols from "${DEFAULT_SYMBOLS_PATH}":`,
+      error
+    );
+    cached = {
+      issueType: {},
+      status: {},
+      fallback: {},
+    };
+  }
   return cached;
 }
