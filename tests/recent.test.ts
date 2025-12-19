@@ -26,8 +26,7 @@ describe('waif recent', () => {
 
     expect(exitCode).toBe(0);
     expect(stdout).toContain('# Recent Issues');
-    expect(stdout).toContain('Status');
-    expect(stdout).toContain('in_progress');
+    expect(stdout).toContain('Type / Status / Title');
 
     const idx2 = stdout.indexOf('wf-2');
     const idx3 = stdout.indexOf('wf-3');
