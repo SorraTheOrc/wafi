@@ -10,7 +10,7 @@ import { getCliVersion } from './lib/version.js';
 
 export async function run(argv = process.argv.slice(2)): Promise<number> {
   // Handle version fast-path before commander parses or commands execute.
-  if (argv.includes('--version') || argv.includes('-v')) {
+  if (argv[0] === '--version' || argv[0] === '-v') {
     logStdout(getCliVersion());
     return 0;
   }
