@@ -7,7 +7,7 @@ WAIF is not really an acronym:
 - `W` / `F`: Workflow
 - `A` / `I`: Alien Intelligence (NOT Artificial Intelligence)
 
-The fact that it’s jumbled into `WAFI` is the point. It also nods affectionately at the nautical acronym, WAIF ("Wind Assisted Freaking Idiot"), a tongue-in-cheek term used by sailors for someone relying too much on wind power - here pointing at humans or agents relying too much on one another.
+The fact that it’s jumbled into `WAFI` is the point. It also nods affectionately at the nautical acronym, WAFI ("Wind Assisted Freaking Idiot"), a tongue-in-cheek term used by sailors for someone relying too much on wind power - here pointing at humans or agents relying too much on one another. To accomodate poor human brains we flipped the F and I to make it easier to remember. Confused? Yep, that's what happens when working with alien intelligences - hopefully WAIF can help.
 
 ## Approach
 
@@ -41,7 +41,6 @@ When interacting with agents, the `waif` CLI tool is designed to integrate with 
 
 - `waif next`: returns the top open, unblocked issue with a concise human rationale; supports `--json` output for automation.
 
-
 ## Install
 
 From the repo root:
@@ -73,19 +72,6 @@ source ~/.bashrc
 ```
 
 Then source it (for bash: `source ~/.bashrc`) and run `npm link` again.
-
-## Usage
-
-- Help: `node dist/index.js --help` (or after linking via `npm link`, just `waif --help`)
-- PRD stub (human output):
-  ```bash
-  wafi prd --out /tmp/stub.md
-  ```
-- PRD stub (JSON output):
-  ```bash
-  wafi prd --out /tmp/stub.md --json
-  ```
-- Verbose logging: add `--verbose` (writes debug to stderr).
 
 ## Development
 

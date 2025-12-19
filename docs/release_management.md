@@ -12,12 +12,12 @@ For now, it provides an initial recommended process that matches the current rep
 
 ## Definitions
 
-- **Release artifact**: A built distribution intended for users (e.g., npm package / published tarball). It may not include `.git/`.
+- **Release artifact**: A built distribution intended for users (e.g., npm package / published tarball). It will not include `.git/`.
 - **Working tree**: A developer checkout with `.git/` present.
 
 ## Version Number Management
 
-### Current `waif --version` behavior
+### `waif --version`
 
 The CLI prints a version string and exits without running other application logic.
 
