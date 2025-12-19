@@ -21,7 +21,6 @@ export async function run(argv = process.argv.slice(2)): Promise<number> {
     .description('WAIF CLI scaffold (Workflow Alien Intelligence)')
     .option('--json', 'Emit JSON output')
     .option('--verbose', 'Emit debug logs to stderr')
-    .option('-v, --version', 'Print version and exit')
     .showHelpAfterError();
 
   program.addCommand(createPrdCommand());
