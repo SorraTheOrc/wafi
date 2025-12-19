@@ -337,7 +337,7 @@ Notes:
 
 * Risk: Duplicate issues → Mitigation: search/list before create; dedupe prompts.
 * Risk: Drift between docs and issues → Mitigation: link artifacts to issue IDs; reconciliation command.
-* Risk: Over-automation reduces trust → Mitigation: “propose → confirm → execute” workflow.
+* Risk: Over-automation reduces trust → Mitigation: “propose → confirm → execute” workflow; previews are best-effort and cannot guarantee strict `--dry-run` behavior once agent hand-offs occur.
 * Risk: Ignore boundary breach → Mitigation: default-deny behavior + explicit allowlist.
 
 ## 11) Open Questions (CLI Only)

@@ -53,9 +53,10 @@ Rule of Five policy: artifact authoring/review uses 5-pass prompts (see wf-ba2.1
 
 ### 4.4 Safety model (see wf-ba2.2.3, wf-ba2.5.1, wf-ba2.6.3)
 
-- Default: “preview-first”. The TUI shows what commands would run and what would change.
+- Default: “preview-first”. The TUI shows the CLI/`bd` commands it would run and what would change.
+- Preview output is best-effort: if a workflow hands off to agents, the system cannot make a strict `--dry-run` promise (agents may take actions outside the TUI’s preview model).
 - Any write action requires explicit confirmation.
-- All writes are executed by the CLI layer (or via `bd`) so the TUI remains thin.
+- All repo writes should be executed by the CLI layer (or via `bd`) so the TUI remains thin and auditable.
 
 ## 5) Requirements
 
