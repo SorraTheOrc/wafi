@@ -75,11 +75,7 @@ export function getCliVersion(mode: VersionMode = 'auto', now = new Date()): str
     }
   }
 
-  const gitHash = effectiveMode === 'dev' || effectiveMode === 'auto' ? tryGetGitShortHash() : null;
-  const isDev = effectiveMode === 'dev' || effectiveMode === 'auto';
-  if (!isDev) {
-    return `v${packageVersion}`;
-  }
+  const gitHash = tryGetGitShortHash();
 
   const stamp = formatTimestampUtc(now);
   const suffix = gitHash ? `${stamp}.${gitHash}` : stamp;
