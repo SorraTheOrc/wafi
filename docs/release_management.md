@@ -41,12 +41,15 @@ The logic lives in `src/lib/version.ts` and is consumed by `src/index.ts`.
 
 ### Notes for deterministic testing
 
-`WAIF_VERSION_MODE` may be used to force behavior:
+The CLI currently selects version output based solely on tags / `.git` presence (see “Current `waif --version` behavior” above).
 
-- `WAIF_VERSION_MODE=release` forces `v<package.json version>`.
-- `WAIF_VERSION_MODE=dev` forces `v0.0.0-dev+...`.
-- `WAIF_VERSION_MODE=auto` (default) selects based on tag / `.git` presence.
+A future testability hook under consideration is a `WAIF_VERSION_MODE` environment variable that would force behavior:
 
+- `WAIF_VERSION_MODE=release` would force `v<package.json version>`.
+- `WAIF_VERSION_MODE=dev` would force `v0.0.0-dev+...`.
+- `WAIF_VERSION_MODE=auto` (default) would select based on tag / `.git` presence.
+
+This environment variable is **not yet implemented** in the current CLI; setting it has no effect today.
 ## Proposed Release Process (Initial)
 
 This is a minimal process intended to work well with the current repo conventions.
