@@ -76,8 +76,11 @@ Process:
 
    - Run the most specific checks available for the changed area (tests/lint/build).
 
-6. Update the PRD / design docs
+6. Update the docs
    - If the issue has linked PRDs or design docs, update them with a summary of the work done, and references to imprtant files altered during the work.
+   - Update the `docs/workflow.md` if the issue changes any part of the development workflow.
+   - Update any relevant README.md files to reflect changes in usage, setup, or configuration.
+   - Update any documents linked from `workflow.md` that are affected by the changes made in this issue.
 
 7. Commit, Push and open a PR
 
@@ -101,5 +104,8 @@ Process:
    - After the PR is merged, close the issue on `main`:
      - `bd close $1 --reason "Done" --json`
      - `bd sync`
+   - Move the PRD in `docs/dev/implemented`
+   - Close the beads issue.
+   - Output a summary of the work done, including a link to the updated documentation (on github)
 
 Start now: confirm the issue scope from the injected JSON and ask the user for the first implementation instruction if the next concrete step is not obvious.
