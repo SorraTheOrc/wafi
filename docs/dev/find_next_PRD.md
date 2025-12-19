@@ -37,25 +37,27 @@
 * Functional requirements (MVP)
 
 1. `waif next` lists eligible candidates (open and unblocked) and returns the top-ranked issue.
-2. `waif next` prints a human-readable single-line summary: `<id>: <title> — <short rationale>`.
+2. `waif next` prints human-readable output. When `bd` is available, the command prepends the short rationale and then includes the full `bd show <id>` output for human consumption. When `bd` is not available, the command falls back to a concise single-line summary: `<id>: <title> — <short rationale>`.
 3. `waif next --json` prints a JSON object with full issue details plus computed score and ranking metadata.
-4. Ranking must use existing bv prioritization scores as the primary signal; tie-break deterministically (e.g., by priority then created\_at).
+4. Ranking uses existing bv prioritization scores as the primary signal; tie-break deterministically by computed numeric score and, if equal, by `id` (lexicographic).
 5. CLI flags: `--json`, `--verbose` (debug logs).
 6. Read-only operation: the command must not modify issue state.
 
 * Non-functional requirements
-  * Fast: complete within a few seconds for typical repo sizes.
   * Deterministic: given the same inputs, ranking output should be stable.
   * Testable: include unit tests for ranking and JSON output format.
   * Minimal dependencies: rely on `bd`/`bv` query outputs where possible.
+  * Performance concerns for very large issue sets were considered and deemed unnecessary for MVP; the current implementation scores the candidate set returned by `bd ready --json` in-memory.
 
 * Integrations
   * Beads CLI (`bd`) and bv ranking tool as data sources (or local computation of available metrics). Use `bd ready --json` / `bd list --json` to enumerate candidates.
   * CLI implementation must follow the repo's CLI conventions and be runnable as `waif next` subcommand.
 
 * Security & privacy
+
   * The command only reads issue metadata; do not emit secrets or sensitive attachments.
-  * JSON output should be safe for machine use; redact fields that contain secrets if any appear in issue metadata.
+  * Redaction was reviewed and deemed unnecessary for this project: issue metadata is considered safe to re-emit in JSON output for machine consumption.
+
 
 ## Release & Operations
 
@@ -101,7 +103,19 @@
       "score": 12.34,
       "rationale": "high priority + low dependency depth",
       "rank": 1,
-      "metadata": { }
+      "metadata": {
+        "issuesSource": "bd|jsonl|env",
+        "bvSource": "bv|env|none",
+        "priority": 1,
+        "created_at": "2025-01-01T00:00:00Z",
+        "tie_break": "id",
+        "contributing_signals": {
+          "bv_score": 12.34,
+          "priority_score": 4000000,
+          "recency_score": -1700000000,
+          "dependency_depth": 2
+        }
+      }
     }
   }
   ```

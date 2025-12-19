@@ -65,17 +65,15 @@ Editing rules (when updating an existing PRD):
 PRD traceability (must do):
 
 - If an `issueId` was provided, include a short reference in the PRD such as: `Source issue: <issueId>`.
-- After writing the PRD file, ensure the beads issue is updated to reference the PRD. The issue should include a plain-text link line such as:
+- After writing the PRD file, ensure the beads issue is updated to reference the PRD. The issue should include a plain-text link in a comment:
 
-  - `Linked PRD: <path/to/PRD.md>`
+  - `bd comment db-id "Linked PRD: <path/to/PRD.md>"`
 
-  This cross-linking must be idempotent (do not add duplicate lines when re-running).
+  This cross-linking must be idempotent (do not add comments when re-running).
 
-- Preferred mechanism: call the beads CLI to update the issue description:
+- The PRD reference should also be included in the issue external references:
 
-  - `bd update <issueId> --body-file - < <path/to/PRD.md>`
-
-  This reads the updated body from stdin and replaces the issue description. When `bd` is unavailable, provide a deterministic fallback and explicit instructions to the user instead of silently failing (for example, edit `.beads/issues.jsonl` in local/offline environments).
+  - `bd update <issueId> --external-ref "PRD: <path/to/PRD.md>"`
 
 - The PRD should clearly contain the `Source issue: <issueId>` reference and the beads issue should contain `Linked PRD: <path>` so traceability is two-way and machine- and human-friendly.
 

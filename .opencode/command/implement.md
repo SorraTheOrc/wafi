@@ -1,8 +1,9 @@
 ---
 description: Implement a beads issue by id
 agent: build
-model: GPT5.1-Codex-Max
+model: "GPT-5.1-Codex-max"
 ---
+
 
 You are implementing a Beads issue in this repository.
 
@@ -75,7 +76,13 @@ Process:
 
    - Run the most specific checks available for the changed area (tests/lint/build).
 
-6. Push and open a PR
+6. Update the docs
+   - If the issue has linked PRDs or design docs, update them with a summary of the work done, and references to imprtant files altered during the work.
+   - Update the `docs/workflow.md` if the issue changes any part of the development workflow.
+   - Update any relevant README.md files to reflect changes in usage, setup, or configuration.
+   - Update any documents linked from `workflow.md` that are affected by the changes made in this issue.
+
+7. Commit, Push and open a PR
 
    - Commit your code changes on the branch (include the Beads id in the commit message).
    - Push the branch to `origin` and set upstream.
@@ -85,17 +92,20 @@ Process:
      - Otherwise, provide the exact branch name and ask the user to open a PR in the hosting UI.
    - Capture the PR URL.
 
-7. Update Beads (do not close)
+8. Update Beads (do not close)
 
    - Update the issue to include the PR URL using `--external-ref` and/or `--notes`.
    - Keep the issue in `in_progress` until the PR is merged.
    - Run `bd sync` before ending the session.
      - If there are no Beads changes to commit (or you are on an ephemeral branch without upstream), use `bd sync --flush-only`.
 
-8. After merge (manual follow-up)
+9. After merge
 
    - After the PR is merged, close the issue on `main`:
      - `bd close $1 --reason "Done" --json`
      - `bd sync`
+   - Move the PRD in `docs/dev/implemented`
+   - Close the beads issue.
+   - Output a summary of the work done, including a link to the updated documentation (on github)
 
 Start now: confirm the issue scope from the injected JSON and ask the user for the first implementation instruction if the next concrete step is not obvious.

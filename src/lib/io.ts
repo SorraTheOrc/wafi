@@ -9,7 +9,7 @@ export function logStderr(message: string) {
 }
 
 export function emitJson(payload: unknown) {
-  logStdout(JSON.stringify(payload));
+  logStdout(JSON.stringify(payload, null, 2));
 }
 
 export function handleError(err: unknown, jsonMode: boolean): number {

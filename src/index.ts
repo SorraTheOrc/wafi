@@ -3,7 +3,9 @@ import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { createPrdCommand } from './commands/prd.js';
+import { createNextCommand } from './commands/next.js';
 import { handleError } from './lib/io.js';
+
 
 export async function run(argv = process.argv.slice(2)): Promise<number> {
   const program = new Command();
@@ -15,6 +17,7 @@ export async function run(argv = process.argv.slice(2)): Promise<number> {
     .showHelpAfterError();
 
   program.addCommand(createPrdCommand());
+  program.addCommand(createNextCommand());
 
   try {
     await program.parseAsync(argv, { from: 'user' });

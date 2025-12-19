@@ -285,3 +285,14 @@ git push                # Push to remote
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
+
+## Project structure
+
+- Source code lives in `src/`
+- Tests live in `tests/`
+- Documentation lives in `docs/`
+- AI-generated planning docs go in `history/` (ephemeral)
+- Beads configs live in `.beads/`
+- Beads issues live in `.beads/issues.jsonl`
+- OpenCode configs live in `.opencode`
+- OpenCode agent commands live in `.opencode/command/` - these are not related to the WAFI CLI itself

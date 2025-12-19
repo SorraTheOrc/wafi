@@ -61,12 +61,14 @@ After `npm run build`, run `npm link` to make the `wafi` command available globa
 ```bash
 npm config set prefix "$HOME/.npm-global"
 mkdir -p "$HOME/.npm-global/bin"
+npm link
 ```
 
-Then ensure `~/.npm-global/bin` is on your PATH. Add this line to your shell RC file (`~/.bashrc`, `~/.bash_profile`, or `~/.zshrc`):
+Then ensure `~/.npm-global/bin` is on your PATH:
 
 ```bash
-export PATH="$HOME/.npm-global/bin:$PATH"
+echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
 ```
 
 Then source it (for bash: `source ~/.bashrc`) and run `npm link` again.
