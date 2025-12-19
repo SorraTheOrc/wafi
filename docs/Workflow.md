@@ -114,7 +114,26 @@ export ISSUE_ID="waif-73k"
 # /prd $PRD_PATH $ISSUE_ID
 ```
 
-Summary: at the end of this step, there is a concrete PRD file at `$PRD_PATH`.
+Invocation pattern (CLI stub generator):
+
+Use this when you want a deterministic, non-interactive PRD stub file created on disk (for example: to hand-edit it, attach it to an issue, or feed it into a later generation step).
+
+```bash
+# Prompt via CLI argument
+waif prd --out "$PRD_PATH" --prompt "<your prompt text>"
+
+# Prompt from stdin (explicit)
+printf "%s" "<your prompt text>" | waif prd --out "$PRD_PATH" --prompt -
+
+# Prompt from file
+waif prd --out "$PRD_PATH" --prompt-file docs/dev/prompt.txt
+```
+
+Notes:
+- `--prompt` and `--prompt-file` are mutually exclusive; providing both exits with code 2.
+- The prompt is embedded into the PRD as a comment block so the context is preserved in-repo.
+
+Summary: at the end of this step, there is a concrete PRD file at `$PRD_PATH`. 
 
 ### 3) Review and sign-off the PRD
 
