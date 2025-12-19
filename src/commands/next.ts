@@ -4,6 +4,7 @@ import { spawnSync } from 'child_process';
 import { Command } from 'commander';
 import { CliError } from '../types.js';
 import { emitJson, logStdout } from '../lib/io.js';
+import { renderInProgressIssuesTable } from '../lib/table.js';
 
 interface Issue {
   id: string;
@@ -47,17 +48,38 @@ function runBd(args: string[], timeout = 30000): string {
   return runSpawn('bd', args, timeout).stdout;
 }
 
+function loadInProgressIssues(verbose: boolean): Issue[] {
+  const envJson = process.env.WAIF_IN_PROGRESS_JSON;
+  if (envJson) {
+    try {
+      const parsed = JSON.parse(envJson);
+      if (Array.isArray(parsed)) return parsed as Issue[];
+    } catch (e) {
+      if (verbose) process.stderr.write(`[debug] failed to parse WAIF_IN_PROGRESS_JSON: ${(e as Error).message}\n`);
+    }
+    return [];
+  }
+
+  if (!isCliAvailable('bd')) return [];
+  try {
+    const out = runBd(['list', '--status', 'in_progress', '--json']);
+    const parsed = JSON.parse(out);
+    if (Array.isArray(parsed)) return parsed as Issue[];
+  } catch (e) {
+    if (verbose) process.stderr.write(`[debug] bd list in_progress failed: ${(e as Error).message}\n`);
+  }
+  return [];
+}
+
 function runBv(args: string[], timeout = 30000): string {
   return runSpawn('bv', args, timeout).stdout;
 }
 
 function isCliAvailable(cmd: string): boolean {
-  try {
-    spawnSync(cmd, ['--version'], { encoding: 'utf8', timeout: 2000 });
-    return true;
-  } catch (e) {
-    return false;
-  }
+  const res = spawnSync(cmd, ['--version'], { encoding: 'utf8', timeout: 2000 });
+  if (res.error) return false;
+  if (typeof res.status === 'number' && res.status !== 0) return false;
+  return true;
 }
 
 function parseIssuesFromJsonl(path: string, verbose: boolean): Issue[] {
@@ -213,6 +235,13 @@ export function createNextCommand() {
         const payload = { ...top.issue, waif };
         emitJson(payload);
       } else {
+        const inProgress = loadInProgressIssues(verbose);
+        if (inProgress.length) {
+          logStdout('In Progress');
+          logStdout(renderInProgressIssuesTable(inProgress));
+          logStdout('');
+        }
+
         let rendered: string | null = null;
         if (isCliAvailable('bd')) {
           try {
@@ -228,6 +257,7 @@ export function createNextCommand() {
         }
         logStdout(rendered);
       }
+
     });
 
   return cmd;
