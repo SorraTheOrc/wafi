@@ -3,6 +3,7 @@ import { join } from 'path';
 import { writeFileSync } from 'fs';
 import { execa } from 'execa';
 import { describe, expect, it } from 'vitest';
+import { getDefaultSymbols } from '../src/lib/symbols.js';
 
 const CLI = [process.execPath, 'dist/index.js'];
 
@@ -54,11 +55,15 @@ describe('waif next', () => {
 
     // in-progress table
     expect(stdout).toContain('wf-ip1');
+    const symbols = getDefaultSymbols();
     const inProgressLine = stdout
       .split('\n')
       .find((l) => l.includes('wf-ip1') && !l.includes('ID'));
     expect(inProgressLine).toBeTruthy();
-    expect(inProgressLine).toMatch(/wf-ip1\s+❓\s+🚧\s+In progress one\s+0\s+1\s+0\s+alice/);
+    expect(inProgressLine).toContain(
+      `wf-ip1  ${symbols.fallback?.issueType ?? '?'} ${symbols.status.in_progress} In progress one`,
+    );
+    expect(inProgressLine).toMatch(/\s+0\s+1\s+0\s+alice/);
 
     // summary table contains the chosen issue
     expect(stdout).toContain('wf-2');

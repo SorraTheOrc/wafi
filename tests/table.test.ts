@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { getDefaultSymbols } from '../src/lib/symbols.js';
 import { renderIssuesTable } from '../src/lib/table.js';
 
 describe('renderIssuesTable', () => {
   it('renders required columns and rows', () => {
+    const symbols = getDefaultSymbols();
     const out = renderIssuesTable([
       {
         id: 'wf-1',
@@ -31,7 +33,7 @@ describe('renderIssuesTable', () => {
     expect(out).not.toContain('Status');
 
     expect(out).toMatch(/wf-1/);
-    expect(out).toMatch(/❓\s+❓\s+First/);
+    expect(out).toContain(`${symbols.fallback?.issueType ?? '?'} ${symbols.fallback?.status ?? '?'} First`);
     expect(out).toMatch(/2/);
     expect(out).toMatch(/3/);
     expect(out).toMatch(/1/);
@@ -53,7 +55,8 @@ describe('renderIssuesTable', () => {
     expect(out).toContain('\u001b[31m');
     expect(out).toContain('wf-1');
     expect(out).toContain('\u001b[0m');
-    expect(out).toMatch(/❓\s+❓\s+Blocked/);
+    const symbols = getDefaultSymbols();
+    expect(out).toContain(`${symbols.fallback?.issueType ?? '?'} ${symbols.fallback?.status ?? '?'} Blocked`);
   });
 
   it('can optionally include status column', () => {
@@ -68,8 +71,9 @@ describe('renderIssuesTable', () => {
     expect(out).toContain('Status');
     expect(out).toContain('open');
     expect(out).toContain('in_progress');
-    expect(out).toMatch(/❓\s+⭕\s+First/);
-    expect(out).toMatch(/❓\s+🚧\s+Second/);
+    const symbols = getDefaultSymbols();
+    expect(out).toContain(`${symbols.fallback?.issueType ?? '?'} ${symbols.status.open} First`);
+    expect(out).toContain(`${symbols.fallback?.issueType ?? '?'} ${symbols.status.in_progress} Second`);
   });
 
   it('returns empty string for empty input', () => {
