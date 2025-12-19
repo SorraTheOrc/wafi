@@ -32,7 +32,15 @@ function truncate(value: string, max: number): string {
   return value.slice(0, max - 1) + '…';
 }
 
-export function renderIssuesTable(issues: IssueForTable[]): string {
+type RenderIssuesTableOptions = {
+  color?: {
+    enabled: boolean;
+    blockedRow: string;
+    reset: string;
+  };
+};
+
+export function renderIssuesTable(issues: IssueForTable[], options: RenderIssuesTableOptions = {}): string {
   if (!issues.length) return '';
 
   const rows = issues
@@ -98,16 +106,22 @@ export function renderIssuesTable(issues: IssueForTable[]): string {
   );
 
   for (const r of rows) {
-    lines.push(
-      [
-        padRight(r.id, widths.id),
-        padRight(truncate(r.title, widths.title), widths.title),
-        padRight(r.priority, widths.priority),
-        padRight(r.blockers, widths.blockers),
-        padRight(r.blocks, widths.blocks),
-        padRight(r.assignee, widths.assignee),
-      ].join('  '),
-    );
+    const rawLine = [
+      padRight(r.id, widths.id),
+      padRight(truncate(r.title, widths.title), widths.title),
+      padRight(r.priority, widths.priority),
+      padRight(r.blockers, widths.blockers),
+      padRight(r.blocks, widths.blocks),
+      padRight(r.assignee, widths.assignee),
+    ].join('  ');
+
+    const blockersNumber = Number(r.blockers);
+    const color = options.color;
+    if (color?.enabled && Number.isFinite(blockersNumber) && blockersNumber > 0) {
+      lines.push(`${color.blockedRow}${rawLine}${color.reset}`);
+    } else {
+      lines.push(rawLine);
+    }
   }
 
   return lines.join('\n');

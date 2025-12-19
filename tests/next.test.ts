@@ -32,9 +32,9 @@ describe('waif next', () => {
 
     expect(exitCode).toBe(0);
 
-    const idxInProgress = stdout.indexOf('== In Progress ==');
-    const idxSummary = stdout.indexOf('== Recommended Summary ==');
-    const idxDetail = stdout.indexOf('== Recommended Detail ==');
+    const idxInProgress = stdout.indexOf('# In Progress');
+    const idxSummary = stdout.indexOf('# Recommended Summary');
+    const idxDetail = stdout.indexOf('# Recommended Detail');
 
     expect(idxInProgress).toBeGreaterThanOrEqual(0);
     expect(idxSummary).toBeGreaterThan(idxInProgress);
@@ -63,9 +63,9 @@ describe('waif next', () => {
     });
 
     expect(exitCode).toBe(0);
-    expect(stdout).not.toContain('== In Progress ==');
-    expect(stdout).toContain('== Recommended Summary ==');
-    expect(stdout).toContain('== Recommended Detail ==');
+    expect(stdout).not.toContain('# In Progress');
+    expect(stdout).toContain('# Recommended Summary');
+    expect(stdout).toContain('# Recommended Detail');
   });
 
   it('picks highest bv score when provided', async () => {

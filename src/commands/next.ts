@@ -6,6 +6,35 @@ import { CliError } from '../types.js';
 import { emitJson, logStdout } from '../lib/io.js';
 import { renderIssuesTable } from '../lib/table.js';
 
+const ANSI = {
+  blue: '\u001b[34m',
+  red: '\u001b[31m',
+  reset: '\u001b[0m',
+} as const;
+
+function isColorEnabled(): boolean {
+  if (!process.stdout.isTTY) return false;
+  if (process.env.NO_COLOR) return false;
+  if (process.env.WAIF_NO_COLOR) return false;
+  return true;
+}
+
+function heading(text: string): string {
+  const line = `# ${text}`;
+  if (!isColorEnabled()) return line;
+  return `${ANSI.blue}${line}${ANSI.reset}`;
+}
+
+function issuesTable(issues: Issue[]): string {
+  return renderIssuesTable(issues, {
+    color: {
+      enabled: isColorEnabled(),
+      blockedRow: ANSI.red,
+      reset: ANSI.reset,
+    },
+  });
+}
+
 interface Issue {
   id: string;
   title?: string;
@@ -240,18 +269,21 @@ export function createNextCommand() {
       } else {
         const inProgress = loadInProgressIssues(verbose);
         if (inProgress.length) {
-          logStdout('== In Progress ==');
-          logStdout(renderIssuesTable(inProgress));
+          logStdout(heading('In Progress'));
+          logStdout('');
+          logStdout(issuesTable(inProgress));
           logStdout('');
         }
 
         const recommended = [top.issue];
 
-        logStdout('== Recommended Summary ==');
-        logStdout(renderIssuesTable(recommended));
+        logStdout(heading('Recommended Summary'));
+        logStdout('');
+        logStdout(issuesTable(recommended));
         logStdout('');
 
-        logStdout('== Recommended Detail ==');
+        logStdout(heading('Recommended Detail'));
+        logStdout('');
         if (isCliAvailable('bd')) {
           try {
             const shown = runBd(['show', top.issue.id]);

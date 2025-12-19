@@ -37,6 +37,23 @@ describe('renderIssuesTable', () => {
     expect(out).toMatch(/alice/);
   });
 
+  it('colors rows red when blocked', () => {
+    const out = renderIssuesTable(
+      [
+        {
+          id: 'wf-1',
+          title: 'Blocked',
+          dependency_count: 1,
+        },
+      ],
+      { color: { enabled: true, blockedRow: '\u001b[31m', reset: '\u001b[0m' } },
+    );
+
+    expect(out).toContain('\u001b[31m');
+    expect(out).toContain('wf-1');
+    expect(out).toContain('\u001b[0m');
+  });
+
   it('returns empty string for empty input', () => {
     expect(renderIssuesTable([])).toBe('');
   });
