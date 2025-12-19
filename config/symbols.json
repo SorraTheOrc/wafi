@@ -10,7 +10,7 @@
     "open": "O",
     "in_progress": "P",
     "done": "D",
-    "closed": "X",
+    "closed": "D",
     "tombstone": "T"
   },
   "fallback": {
