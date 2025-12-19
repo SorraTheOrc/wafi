@@ -1,8 +1,9 @@
 ---
 description: Implement a beads issue by id
 agent: build
-# model: GPT-5.1-Codex-max
+model: "GPT-5.1-Codex-max"
 ---
+
 
 You are implementing a Beads issue in this repository.
 
