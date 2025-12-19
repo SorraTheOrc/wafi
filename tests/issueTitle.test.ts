@@ -3,21 +3,21 @@ import { renderIssueTitle } from '../src/lib/issueTitle.js';
 
 describe('renderIssueTitle', () => {
   it('renders type + status + title with default symbols', () => {
-    expect(renderIssueTitle({ issue_type: 'feature', status: 'open', title: 'Hello' })).toBe('F O Hello');
-    expect(renderIssueTitle({ issue_type: 'bug', status: 'in_progress', title: 'Fix it' })).toBe('B P Fix it');
-    expect(renderIssueTitle({ issue_type: 'task', status: 'done', title: 'Ship' })).toBe('T D Ship');
-    expect(renderIssueTitle({ issue_type: 'epic', status: 'closed', title: 'Big' })).toBe('E D Big');
-    expect(renderIssueTitle({ issue_type: 'chore', status: 'tombstone', title: 'Cleanup' })).toBe('C T Cleanup');
+    expect(renderIssueTitle({ issue_type: 'feature', status: 'open', title: 'Hello' })).toBe('✨ ⭕ Hello');
+    expect(renderIssueTitle({ issue_type: 'bug', status: 'in_progress', title: 'Fix it' })).toBe('🐛 🚧 Fix it');
+    expect(renderIssueTitle({ issue_type: 'task', status: 'done', title: 'Ship' })).toBe('🧩 ✅ Ship');
+    expect(renderIssueTitle({ issue_type: 'epic', status: 'closed', title: 'Big' })).toBe('🗺️ ✓ Big');
+    expect(renderIssueTitle({ issue_type: 'chore', status: 'tombstone', title: 'Cleanup' })).toBe('🧹 🪦 Cleanup');
   });
 
   it('normalizes keys and falls back when unknown', () => {
-    expect(renderIssueTitle({ issue_type: 'FEATURE', status: 'Open', title: 'Hello' })).toBe('F O Hello');
-    expect(renderIssueTitle({ issue_type: 'weird', status: 'unknown', title: 'Hello' })).toBe('? ? Hello');
+    expect(renderIssueTitle({ issue_type: 'FEATURE', status: 'Open', title: 'Hello' })).toBe('✨ ⭕ Hello');
+    expect(renderIssueTitle({ issue_type: 'weird', status: 'unknown', title: 'Hello' })).toBe('❓ ❓ Hello');
   });
 
   it('does not truncate when maxLen <= 0', () => {
     const s = renderIssueTitle({ issue_type: 'feature', status: 'open', title: 'A'.repeat(50) }, 0);
-    expect(s).toBe(`F O ${'A'.repeat(50)}`);
+    expect(s).toBe(`✨ ⭕ ${'A'.repeat(50)}`);
   });
 
   it('truncates with ellipsis and never exceeds maxLen', () => {
@@ -27,8 +27,8 @@ describe('renderIssueTitle', () => {
     expect(s10.length).toBeLessThanOrEqual(10);
     expect(s10).toContain('...');
 
-    const exact = renderIssueTitle({ issue_type: 'feature', status: 'open', title: 'abc' }, 'F O abc'.length);
-    expect(exact).toBe('F O abc');
+    const exact = renderIssueTitle({ issue_type: 'feature', status: 'open', title: 'abc' }, '✨ ⭕ abc'.length);
+    expect(exact).toBe('✨ ⭕ abc');
   });
 
   it('handles very small maxLen values', () => {

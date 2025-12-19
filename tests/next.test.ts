@@ -58,7 +58,7 @@ describe('waif next', () => {
       .split('\n')
       .find((l) => l.includes('wf-ip1') && !l.includes('ID'));
     expect(inProgressLine).toBeTruthy();
-    expect(inProgressLine).toMatch(/wf-ip1\s+\?\s+P\s+In progress one\s+0\s+1\s+0\s+alice/);
+    expect(inProgressLine).toMatch(/wf-ip1\s+❓\s+🚧\s+In progress one\s+0\s+1\s+0\s+alice/);
 
     // summary table contains the chosen issue
     expect(stdout).toContain('wf-2');

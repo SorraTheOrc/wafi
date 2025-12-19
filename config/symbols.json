@@ -1,20 +1,20 @@
 {
   "issueType": {
-    "bug": "B",
-    "feature": "F",
-    "task": "T",
-    "epic": "E",
-    "chore": "C"
+    "bug": "🐛",
+    "feature": "✨",
+    "task": "🧩",
+    "epic": "🗺️",
+    "chore": "🧹"
   },
   "status": {
-    "open": "O",
-    "in_progress": "P",
-    "done": "D",
-    "closed": "D",
-    "tombstone": "T"
+    "open": "⭕",
+    "in_progress": "🚧",
+    "done": "✅",
+    "closed": "✓",
+    "tombstone": "🪦"
   },
   "fallback": {
-    "issueType": "?",
-    "status": "?"
+    "issueType": "❓",
+    "status": "❓"
   }
 }

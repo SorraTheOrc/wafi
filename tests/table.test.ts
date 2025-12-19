@@ -31,7 +31,7 @@ describe('renderIssuesTable', () => {
     expect(out).not.toContain('Status');
 
     expect(out).toMatch(/wf-1/);
-    expect(out).toMatch(/\?\s+\?\s+First/);
+    expect(out).toMatch(/❓\s+❓\s+First/);
     expect(out).toMatch(/2/);
     expect(out).toMatch(/3/);
     expect(out).toMatch(/1/);
@@ -53,7 +53,7 @@ describe('renderIssuesTable', () => {
     expect(out).toContain('\u001b[31m');
     expect(out).toContain('wf-1');
     expect(out).toContain('\u001b[0m');
-    expect(out).toMatch(/\?\s+\?\s+Blocked/);
+    expect(out).toMatch(/❓\s+❓\s+Blocked/);
   });
 
   it('can optionally include status column', () => {
@@ -68,8 +68,8 @@ describe('renderIssuesTable', () => {
     expect(out).toContain('Status');
     expect(out).toContain('open');
     expect(out).toContain('in_progress');
-    expect(out).toMatch(/\?\s+O\s+First/);
-    expect(out).toMatch(/\?\s+P\s+Second/);
+    expect(out).toMatch(/❓\s+⭕\s+First/);
+    expect(out).toMatch(/❓\s+🚧\s+Second/);
   });
 
   it('returns empty string for empty input', () => {
