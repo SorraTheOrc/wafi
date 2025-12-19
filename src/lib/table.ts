@@ -1,7 +1,10 @@
+import { renderIssueTitle } from './issueTitle.js';
+
 export type IssueForTable = {
   id: string;
   title?: string;
   status?: string;
+  issue_type?: string;
   priority?: number;
   assignee?: string;
   dependency_count?: number;
@@ -73,7 +76,7 @@ export function renderIssuesTable(issues: IssueForTable[], options: RenderIssues
       const blocks = computeBlocksCount(i);
       return {
         id: i.id,
-        title: i.title ?? '(no title)',
+        title: renderIssueTitle(i, 0),
         status: typeof i.status === 'string' ? i.status : '',
         priority: typeof i.priority === 'number' ? String(i.priority) : '',
         blockers: String(blockers),
