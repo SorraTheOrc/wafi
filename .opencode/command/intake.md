@@ -110,47 +110,48 @@ Process (must follow):
 
 6. Create or update the Beads issue (must do)
 
-    Create a new Beads issue, or update an existing issue, so that the description contains the full intake brief and links.
+   Create a new Beads issue, or update an existing issue, so that the description contains the full intake brief and links.
 
-    - Type: `feature`
-    - Priority: default to `2` unless the user indicates urgency/risk.
-    - Title: `<working title>: Intake brief`
+   - Type: `feature`
+   - Priority: default to `2` unless the user indicates urgency/risk.
+   - Title: `<working title>: Intake brief`
 
-    Use `bd create ... --json`.
+   Use `bd create ... --json`.
 
-    Issue description template (must follow):
+   Issue description template (must follow):
 
-    - Problem
-    - Users
-    - Success criteria
-    - Constraints
-    - Existing state (if applicable)
-    - Desired change (if applicable)
-    - Likely duplicates / related docs (file paths)
-    - Related issues (Beads ids)
-    - Clarifying questions
-    - Proposed next step:
-      - `NEW PRD` at: `<path>` OR
-      - `UPDATE PRD` at: `<path>`
-      - Recommended next command: `/prd <path> <new-issue-id>`
+   - Problem
+   - Users
+   - Success criteria
+   - Constraints
+   - Existing state (if applicable)
+   - Desired change (if applicable)
+   - Likely duplicates / related docs (file paths)
+   - Related issues (Beads ids)
+   - Clarifying questions
+   - Proposed next step:
+     - `NEW PRD` at: `<path>` OR
+     - `UPDATE PRD` at: `<path>`
+     - Recommended next command: `/prd <path> <new-issue-id>`
 
-    Cross-linking (must do):
+   Cross-linking (must do):
 
-    - If you are creating a new PRD as part of intake, ensure two-way traceability:
-      - The PRD file must include `Source issue: <new-issue-id>`.
-      - The newly-created beads issue must include a line `Linked PRD: <path/to/PRD.md>` in its description.
+   - If you are creating a new PRD as part of intake, ensure two-way traceability:
 
-    - Preferred mechanism: after creating the issue and writing the PRD, call the beads CLI to update the issue description with the PRD link. Example sequence:
+     - The PRD file must include `Source issue: <new-issue-id>`.
+     - The newly-created beads issue must include a line `Linked PRD: <path/to/PRD.md>` in its description.
 
-      1. `bd create "<title>" -t feature -p 2 --description "<full intake body>" --json` -> captures `id` in output
-      2. Write PRD to `<path>` with `Source issue: <id>` inside
-      3. `bd update <id> --body-file - < <path>` to append or include `Linked PRD: <path>` in the issue description
+   - Preferred mechanism: after creating the issue and writing the PRD, call the beads CLI to update the issue description with the PRD link. Example sequence:
 
-    - If `bd` is unavailable, provide a deterministic fallback and explicit manual instructions to the user (e.g., edit `.beads/issues.jsonl` to add the `Linked PRD` line), and do not silently fail to leave the issue unlinked.
+     1. `bd create "<title>" -t feature -p 2 --description "<full intake body>" --json` -> captures `id` in output
+     2. Write PRD to `<path>` with `Source issue: <id>` inside
+     3. `bd update <id> --body-file - < <path>` to append or include `Linked PRD: <path>` in the issue description
 
-    - The cross-link must be idempotent: re-running intake/prd with the same PRD path and issue id must not add duplicate `Linked PRD` lines.
+   - If `bd` is unavailable, provide a deterministic fallback and explicit manual instructions to the user (e.g., edit `.beads/issues.jsonl` to add the `Linked PRD` line), and do not silently fail to leave the issue unlinked.
 
-    If there is a suitable parent issue then create the new issue as a sub-issue (use `--parent <id>`).
+   - The cross-link must be idempotent: re-running intake/prd with the same PRD path and issue id must not add duplicate `Linked PRD` lines.
+
+   If there is a suitable parent issue then create the new issue as a sub-issue (use `--parent <id>`).
 
    - Problem
    - Users
