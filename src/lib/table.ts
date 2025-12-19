@@ -6,15 +6,32 @@ export type IssueForTable = {
   assignee?: string;
   dependency_count?: number;
   dependent_count?: number;
-  dependencies?: Array<{ type?: string; depends_on_id?: string }>;
+  // We support both shapes:
+  // - bd show: dependencies[] entries are issue-like objects w/ dependency_type + status
+  // - older/jsonl-ish: dependencies[] entries are edge-like objects w/ type + depends_on_id
+  dependencies?: Array<{ id?: string; status?: string; dependency_type?: string; type?: string; depends_on_id?: string }>;
 };
 
+function isTerminalStatus(status: string): boolean {
+  const normalized = status.toLowerCase();
+  return normalized === 'closed' || normalized === 'done' || normalized === 'tombstone';
+}
+
 function computeBlockersCount(issue: IssueForTable): number {
+  const deps = issue.dependencies;
+  if (deps && Array.isArray(deps) && deps.length > 0) {
+    return deps.filter((d) => {
+      const rel = String(d?.dependency_type ?? d?.type ?? '').toLowerCase();
+      if (rel !== 'blocks') return false;
+      const status = String(d?.status ?? '').toLowerCase();
+      return status.length === 0 ? true : !isTerminalStatus(status);
+    }).length;
+  }
+
+  // Fallback: Beads list output exposes only total dependency count.
   if (typeof issue.dependency_count === 'number') return issue.dependency_count;
 
-  const deps = issue.dependencies;
-  if (!deps || !Array.isArray(deps)) return 0;
-  return deps.filter((d) => (d?.type || '').toLowerCase() === 'blocks').length;
+  return 0;
 }
 
 function computeBlocksCount(issue: IssueForTable): number {

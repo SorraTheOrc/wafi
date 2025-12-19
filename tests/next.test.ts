@@ -19,7 +19,19 @@ describe('waif next', () => {
     ]);
 
     const inProgressPayload = JSON.stringify([
-      { id: 'wf-ip1', title: 'In progress one', status: 'in_progress', priority: 0, assignee: 'alice', dependency_count: 2 },
+      {
+        id: 'wf-ip1',
+        title: 'In progress one',
+        status: 'in_progress',
+        priority: 0,
+        assignee: 'alice',
+        // With full dependency objects present, waif should display *actual* blockers.
+        dependencies: [
+          { id: 'wf-d1', dependency_type: 'blocks', status: 'open' },
+          { id: 'wf-d2', dependency_type: 'blocks', status: 'closed' },
+          { id: 'wf-parent', dependency_type: 'parent-child', status: 'in_progress' },
+        ],
+      },
     ]);
 
     const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), 'next'], {
@@ -42,6 +54,11 @@ describe('waif next', () => {
 
     // in-progress table
     expect(stdout).toContain('wf-ip1');
+    const inProgressLine = stdout
+      .split('\n')
+      .find((l) => l.includes('wf-ip1') && !l.includes('ID'));
+    expect(inProgressLine).toBeTruthy();
+    expect(inProgressLine).toMatch(/wf-ip1\s+In progress one\s+0\s+1\s+0\s+alice/);
 
     // summary table contains the chosen issue
     expect(stdout).toContain('wf-2');

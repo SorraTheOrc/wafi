@@ -93,14 +93,46 @@ function loadInProgressIssues(verbose: boolean): Issue[] {
   }
 
   if (!isCliAvailable('bd')) return [];
+
+  let base: Issue[] = [];
   try {
     const out = runBd(['list', '--status', 'in_progress', '--json']);
     const parsed = JSON.parse(out);
-    if (Array.isArray(parsed)) return parsed as Issue[];
+    if (Array.isArray(parsed)) base = parsed as Issue[];
   } catch (e) {
     if (verbose) process.stderr.write(`[debug] bd list in_progress failed: ${(e as Error).message}\n`);
+    return [];
   }
-  return [];
+
+  // `bd list` only gives `dependency_count` (total deps), not the actual blocking deps.
+  // To render an accurate Blockers count in the table, we enrich in-progress issues
+  // with dependency details from `bd show --json`.
+  try {
+    const ids = base.map((i) => i.id).filter(Boolean);
+    if (!ids.length) return base;
+
+    const chunkSize = 40;
+    const fullById = new Map<string, Issue>();
+
+    for (let idx = 0; idx < ids.length; idx += chunkSize) {
+      const chunk = ids.slice(idx, idx + chunkSize);
+      const out = runBd(['show', ...chunk, '--json']);
+      const parsed = JSON.parse(out);
+      const list = Array.isArray(parsed) ? (parsed as Issue[]) : [parsed as Issue];
+      for (const issue of list) {
+        if (issue?.id) fullById.set(issue.id, issue);
+      }
+    }
+
+    return base.map((i) => {
+      const full = fullById.get(i.id);
+      // Prefer the full issue (has dependencies + statuses), but preserve list-only fields if needed.
+      return full ? { ...i, ...full } : i;
+    });
+  } catch (e) {
+    if (verbose) process.stderr.write(`[debug] bd show in_progress enrichment failed: ${(e as Error).message}\n`);
+    return base;
+  }
 }
 
 function runBv(args: string[], timeout = 30000): string {
