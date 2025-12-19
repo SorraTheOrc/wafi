@@ -16,6 +16,32 @@ test('waif --help shows prd', async () => {
   expect(stdout).toContain('prd');
 });
 
+test('waif --version prints release semver in release mode', async () => {
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
+  const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), '--version'], {
+    env: { WAIF_VERSION_MODE: 'release' },
+  });
+  expect(exitCode).toBe(0);
+  expect(stdout.trim()).toBe(`v${pkg.version}`);
+});
+
+test('waif -v works', async () => {
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
+  const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), '-v'], {
+    env: { WAIF_VERSION_MODE: 'release' },
+  });
+  expect(exitCode).toBe(0);
+  expect(stdout.trim()).toBe(`v${pkg.version}`);
+});
+
+test('waif --version can emit dev stamp', async () => {
+  const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), '--version'], {
+    env: { WAIF_VERSION_MODE: 'dev' },
+  });
+  expect(exitCode).toBe(0);
+  expect(stdout.trim()).toMatch(/^v0\.0\.0-dev\+\d{8}T\d{6}(\.[0-9a-f]+)?$/);
+});
+
 test('waif prd --help works', async () => {
   const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), 'prd', '--help']);
   expect(exitCode).toBe(0);

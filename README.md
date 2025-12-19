@@ -40,6 +40,7 @@ When interacting with agents, the `waif` CLI tool is designed to integrate with 
 ## WAIF CLI Features
 
 - `waif next`: returns the top open, unblocked issue with a concise human rationale; supports `--json` output for automation.
+- `waif --version` (alias: `-v`): prints the CLI version and exits.
 
 ## Install
 
