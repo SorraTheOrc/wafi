@@ -4,16 +4,24 @@ import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { createPrdCommand } from './commands/prd.js';
 import { createNextCommand } from './commands/next.js';
-import { handleError } from './lib/io.js';
+import { handleError, logStdout } from './lib/io.js';
+import { getCliVersion } from './lib/version.js';
 
 
 export async function run(argv = process.argv.slice(2)): Promise<number> {
+  // Handle version fast-path before commander parses or commands execute.
+  if (argv.includes('--version') || argv.includes('-v')) {
+    logStdout(getCliVersion());
+    return 0;
+  }
+
   const program = new Command();
   program
     .name('waif')
     .description('WAIF CLI scaffold (Workflow Alien Intelligence)')
     .option('--json', 'Emit JSON output')
     .option('--verbose', 'Emit debug logs to stderr')
+    .option('-v, --version', 'Print version and exit')
     .showHelpAfterError();
 
   program.addCommand(createPrdCommand());
