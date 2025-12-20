@@ -92,6 +92,116 @@ This repository is currently set up to build to `dist/` via TypeScript.
   - GitHub Releases upload
   - or attach artifact to the tag
 
+### Release Checklist
+
+Follow these steps as the release owner to perform a reliable release for this Node.js CLI project.
+
+1) Prepare a release topic branch
+
+- Create a branch from `main` named `release/vX.Y.Z`.
+- Update the `package.json` `version` field to the desired semver (e.g., `1.2.3`).
+- Update `docs/CHANGELOG.md` with a user-facing summary for the release.
+
+Commands:
+
+```bash
+# from main
+git fetch origin main:main
+git switch -c release/v1.2.3
+# bump version (example using npm)
+npm version 1.2.3 --no-git-tag-version
+```
+
+2) Run local quality gates
+
+- Build the project and run the test suite locally before opening a PR.
+
+Commands:
+
+```bash
+npm install
+npm run build
+npm test
+```
+
+3) Open a PR to `main`
+
+- Push your topic branch and open a PR into `main`.
+- Ensure CI passes and request review.
+
+Commands:
+
+```bash
+git add package.json docs/CHANGELOG.md
+git commit -m "release: prepare version v1.2.3"
+git push -u origin HEAD
+# Create PR (GitHub CLI)
+gh pr create --title "Release v1.2.3" --body "Release notes and version bump" --base main
+```
+
+4) Merge and tag the release
+
+- Merge the PR, then create an annotated tag on the merge commit.
+
+Commands:
+
+```bash
+# after merge
+git fetch origin main:main
+git switch main
+git pull --rebase
+# create annotated tag
+git tag -a v1.2.3 -m "WAIF v1.2.3"
+git push origin v1.2.3
+```
+
+5) Publish the release artifact
+
+Options (pick one):
+
+- npm publish (recommended for npm-distributed CLI packages):
+
+```bash
+# ensure you are logged in: npm adduser
+npm publish --access public
+```
+
+- GitHub Releases (recommended for attaching build artifacts):
+
+```bash
+# create a release (gh cli)
+gh release create v1.2.3 --notes-file docs/CHANGELOG.md
+```
+
+Notes:
+- If you publish to npm, ensure package contents are correct (use `.npmignore` or `files` in `package.json`).
+- Prefer `--access public` for public npm packages; omit for private packages.
+
+6) Post-release verification
+
+- Verify the installed artifact reports the correct version and core commands work:
+
+```bash
+npm install -g waif@1.2.3
+waif --version   # should print v1.2.3
+waif --help
+waif next
+```
+
+7) CI recommendations
+
+- Enforce the following checks on PRs targeting `main` during release windows:
+  - `npm run build` must succeed
+  - `npm test` must pass
+  - Linting (if configured)
+  - A check that `package.json` version matches the release tag (optional CI step)
+
+8) Post-merge housekeeping
+
+- Update `docs/releases/` with any expanded release notes if desired.
+- If new details emerged after the initial changelog update in step 1, append any additional post-release notes to `docs/CHANGELOG.md` and add a link to the release tag.
+
+
 ### 6) Post-release checks
 
 - Install/use the released artifact and verify:
@@ -103,3 +213,4 @@ This repository is currently set up to build to `dist/` via TypeScript.
 - Decide whether releases are published to npm, GitHub Releases, or both.
 - Decide whether to generate release notes automatically from `CHANGELOG.md`.
 - Decide whether to enforce version/tag correctness in CI (recommended).
+
