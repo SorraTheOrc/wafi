@@ -182,7 +182,7 @@ Notes:
 - Verify the installed artifact reports the correct version and core commands work:
 
 ```bash
-npm install -g ./
+npm install -g waif@1.2.3
 waif --version   # should print v1.2.3
 waif --help
 waif next
