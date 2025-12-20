@@ -52,6 +52,45 @@ fi
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
+# Worktree helpers (creates or reuses a git worktree at ./<actor>)
+worktree_branch_name() {
+  local actor="$1"
+  printf "%s_Worktree" "$actor"
+}
+
+worktree_exists_for_branch() {
+  local branch="$1"
+  git -C "$repo_root" worktree list --porcelain | awk -v b="refs/heads/$branch" '\
+    $1=="branch" && $2==b {print 1; exit 0} END{exit 1}'
+}
+
+ensure_worktree() {
+  local actor="$1"
+  local target_dir="$repo_root/$actor"
+  local branch
+  branch=$(worktree_branch_name "$actor")
+
+  if [[ -d "$target_dir" ]]; then
+    if git -C "$target_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+      return 0
+    else
+      echo "Directory exists but is not a git worktree: $target_dir" >&2
+      return 1
+    fi
+  fi
+
+  if worktree_exists_for_branch "$branch" >/dev/null 2>&1; then
+    echo "Branch '$branch' is already checked out in another worktree." >&2
+    return 1
+  fi
+
+  if git -C "$repo_root" show-ref --verify --quiet "refs/heads/$branch"; then
+    git -C "$repo_root" worktree add "$target_dir" "$branch"
+  else
+    git -C "$repo_root" worktree add -b "$branch" "$target_dir"
+  fi
+}
+
 pane_title() {
   local pane_id="$1"
   local title="$2"
@@ -66,7 +105,15 @@ pane_bootstrap() {
   pane_title "$pane_id" "$label"
 
   if [[ -n "$agent_role" ]]; then
-    tmux send-keys -t "$pane_id" "cd \"$repo_root\"; export AGENT_ROLE=\"$agent_role\"; clear; echo \"[$label] Ready. Suggested next step:\"; echo \"  - PM: waif next\"; echo \"  - Design: /design <bd-id>\"; echo \"  - Build: /implement <bd-id>\"" C-m
+    # Use actor name equal to role for simple mapping; ensure worktree exists and start waif in it.
+    local actor_name="$agent_role"
+    if ! ensure_worktree "$actor_name"; then
+      tmux send-keys -t "$pane_id" "cd \"$repo_root\"; clear; echo \"[$label] Failed to create/reuse worktree for $actor_name\"" C-m
+      return 0
+    fi
+    local wt_dir="$repo_root/$actor_name"
+    # Export BEADS_NO_DAEMON and BD_ACTOR, cd into worktree, run waif startWork.
+    tmux send-keys -t "$pane_id" "cd \"$wt_dir\"; export BEADS_NO_DAEMON=1; export BD_ACTOR=\"$actor_name\"; clear; echo \"[$label] Starting waif startWork in $wt_dir\"; waif startWork \"$actor_name\"" C-m
   else
     tmux send-keys -t "$pane_id" "cd \"$repo_root\"; clear; echo \"[User] Shell ready in repo root.\"" C-m
   fi
