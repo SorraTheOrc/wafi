@@ -98,18 +98,38 @@ The following is the exact approved example exchange that must be preserved in t
 
 - Question (opencode → waif → user → opencode stdin):
   - opencode event: `{ "type": "question", "id": "q1", "text": "What is the one-line purpose of this feature?" }`
-  - waif displays and collects answer and writes to opencode stdin: `{ "type": "answer", "questionId": "q1", "text": "..." }`
+  - waif displays and collects answer and writes to opencode stdin: `{ "type": "answer", "questionId": "q1", "text": "Make it easy for PMs to run an interactive PRD authoring session locally." }`
+
+- Follow-up question (clarification):
+  - opencode event: `{ "type": "question", "id": "q2", "text": "Who is the primary user persona for this PRD?" }`
+  - waif prompts the user; user replies: `{ "type": "answer", "questionId": "q2", "text": "Product Managers who need auditable, local PRDs." }`
+
+- Scope question (edge cases):
+  - opencode event: `{ "type": "question", "id": "q3", "text": "Should the tool attempt to create a PR, or only write the PRD file?" }`
+  - user replies: `{ "type": "answer", "questionId": "q3", "text": "Only write the PRD file by default; PR creation is opt-in." }`
 
 - File-proposal (preview):
-  - opencode event: `{ "type":"file-proposal","id":"f1","path":"docs/dev/wf-ba2.3.7_PRD.md","preview":"### Purpose\n..." }`
-  - waif prompts accept? [y/N] → on accept send `{ "type":"file-accept","fileId":"f1","accepted":true }` to opencode stdin
+  - opencode event: `{ "type":"file-proposal","id":"f1","path":"docs/dev/wf-ba2.3.7_PRD.md","preview":"### Purpose\nMake it easy for PMs to run...\n### Users\n..." }`
+  - waif prompts accept? [y/N] → user inspects preview and answers `y` — waif sends `{ "type":"file-accept","fileId":"f1","accepted":true }` to opencode stdin
 
-- File-write:
-  - opencode event: `{ "type":"file-write","id":"w1","path":"docs/dev/wf-ba2.3.7_PRD.md","content":"<full markdown>" }`
-  - waif runs atomic write: tmp -> remark -> fsync -> rename; audits and replies `{ "type":"file-written","fileId":"w1","status":"ok" }`
+- Additional question (content detail):
+  - opencode event: `{ "type": "question", "id": "q4", "text": "Provide 2-3 acceptance criteria for the PRD output." }`
+  - user replies: `{ "type": "answer", "questionId": "q4", "text": "1) File written, 2) Audit present, 3) Beads link added." }`
+
+- File-proposal (second patch preview):
+  - opencode event: `{ "type":"file-proposal","id":"f2","path":"docs/dev/wf-ba2.3.7_PRD.md","preview":"### Acceptance Criteria\n1. File written...\n2. Audit..." }`
+  - user inspects and rejects a small wording change: user selects `n` and sends `{ "type":"file-accept","fileId":"f2","accepted":false }` and then provides an inline edit via waif UI: `{ "type":"file-edit","fileId":"f2","patch":"Replace 'Audit' with 'Audit log'" }`
+
+- File-write (agent commits accepted changes):
+  - opencode event: `{ "type":"file-write","id":"w1","path":"docs/dev/wf-ba2.3.7_PRD.md","content":"<full markdown including accepted edits>" }`
+  - waif runs atomic write: tmp -> remark -> fsync -> rename; records `{ "type":"file-written","fileId":"w1","status":"ok" }` in session log
+
+- Multi-file write (agent writes ancillary artifacts):
+  - opencode event: `{ "type":"file-write","id":"w2","path":".waif/audit/<session-id>.json","content":"{...redacted audit...}" }`
+  - waif writes audit atomically and replies `{ "type":"file-written","fileId":"w2","status":"ok" }`
 
 - Session complete:
-  - opencode event: `{ "type":"session-complete","summary":{"files":["docs/dev/wf-ba2.3.7_PRD.md"]} }`
-  - waif runs final remark, computes affected-files, idempotently links beads, writes `.waif/audit/<session-id>.json`, emits final JSON summary, exit 0.
+  - opencode event: `{ "type":"session-complete","summary":{"files":["docs/dev/wf-ba2.3.7_PRD.md",".waif/audit/<session-id>.json"]} }`
+  - waif runs final remark, computes affected-files, idempotently links beads, writes `.waif/audit/<session-id>.json` (if not already present), replies with final summary JSON, and exits `0`.
 
 ## Source issue: wf-ba2.3.7
