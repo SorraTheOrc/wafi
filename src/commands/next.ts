@@ -6,6 +6,7 @@ import { CliError } from '../types.js';
 import { emitJson, logStdout } from '../lib/io.js';
 import { renderIssueTitle } from '../lib/issueTitle.js';
 import { renderIssuesTable } from '../lib/table.js';
+import { copyToClipboard } from '../lib/clipboard.js';
 
 const ANSI = {
   blue: '\u001b[34m',
@@ -288,8 +289,14 @@ export function createNextCommand() {
 
       const { issues, source } = loadIssues(verbose);
       const bv = loadBvScores(verbose);
-      const top = selectTop(issues, bv, verbose);
-      const waif = {
+       const top = selectTop(issues, bv, verbose);
+
+       const clipboardResult = copyToClipboard(top.issue.id);
+       if (!clipboardResult.ok && verbose) {
+         process.stderr.write(`[debug] clipboard copy failed: ${clipboardResult.error}\n`);
+       }
+
+       const waif = {
         score: top.score,
         rationale: top.rationale,
         rank: 1,

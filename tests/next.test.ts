@@ -39,6 +39,7 @@ describe('waif next', () => {
       env: {
         WAIF_ISSUES_PATH: tmpIssues,
         WAIF_IN_PROGRESS_JSON: inProgressPayload,
+        WAIF_CLIPBOARD_CMD: process.execPath,
         PATH: '',
       },
     });
@@ -80,6 +81,7 @@ describe('waif next', () => {
       env: {
         WAIF_ISSUES_PATH: tmpIssues,
         WAIF_IN_PROGRESS_JSON: JSON.stringify([]),
+        WAIF_CLIPBOARD_CMD: process.execPath,
         PATH: '',
       },
     });
@@ -108,6 +110,7 @@ describe('waif next', () => {
       env: {
         WAIF_ISSUES_PATH: tmpIssues,
         WAIF_BV_PRIORITY_JSON: bvPayload,
+        WAIF_CLIPBOARD_CMD: process.execPath,
         PATH: '',
       },
     });
@@ -130,7 +133,7 @@ describe('waif next', () => {
     ]);
 
     const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), 'next', '--json'], {
-      env: { WAIF_ISSUES_PATH: tmpIssues, PATH: '' },
+      env: { WAIF_ISSUES_PATH: tmpIssues, WAIF_CLIPBOARD_CMD: process.execPath, PATH: '' },
     });
 
     expect(exitCode).toBe(0);
