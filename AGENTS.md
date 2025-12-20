@@ -224,6 +224,13 @@ bd sync               # Commit and push changes
 
 ### Workflow Pattern
 
+**IMPORTANT: If working in a secondary worktree (worktree_* branches), sync with main FIRST:**
+
+```bash
+git fetch origin main:main  # Update local main
+git rebase main             # Sync worktree branch with main
+```
+
 1. **Start**: Run `bd ready` to find actionable work
 2. **Claim**: Use `bd update <id> --status=in_progress`
 3. **Work**: Implement the task
