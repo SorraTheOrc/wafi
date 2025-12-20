@@ -7,10 +7,10 @@ export function createStartWorkCommand() {
   cmd
     .description('Start the agent runtime in this pane (sets prompt and pane title)')
     .argument('<agent>', 'Agent name')
-    .option('--rc', 'Load user shell rc/profile (bash: enable ~/.bashrc, etc.)')
+    .option('--norc', 'Do not load user shell rc/profile (bash: --noprofile --norc)')
     .option('--env <key=value...>', 'Set additional environment variables before starting shell')
     .option('--init <command...>', 'Run initialization command(s) before starting shell')
-    .action((agent: string, options: { rc?: boolean; env?: string[]; init?: string[] }) => {
+    .action((agent: string, options: { norc?: boolean; env?: string[]; init?: string[] }) => {
       // If inside tmux, set the pane title to the agent name.
       try {
         if (process.env.TMUX) {
@@ -46,13 +46,13 @@ export function createStartWorkCommand() {
         }
       }
 
-      // Launch a clean interactive shell replacing this process so the prompt and environment apply.
+      // Launch an interactive shell replacing this process so the prompt and environment apply.
       const shell = process.env.SHELL ?? 'bash';
       const isBash = shell.endsWith('bash');
       const args = isBash
-        ? options.rc
-          ? ['-i']
-          : ['--noprofile', '--norc', '-i']
+        ? options.norc
+          ? ['--noprofile', '--norc', '-i']
+          : ['-i']
         : ['-i'];
 
       const res = spawnSync(shell, args, { stdio: 'inherit', env });
