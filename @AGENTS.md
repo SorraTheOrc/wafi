@@ -12,6 +12,15 @@ bd close <id>         # Complete work
 bd sync               # Sync with git
 ```
 
+## Starting Work in a Worktree
+
+**If working in a secondary worktree (worktree_* branches), sync with main FIRST:**
+
+```bash
+git fetch origin main:main  # Update local main
+git rebase main             # Sync worktree branch with main
+```
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
