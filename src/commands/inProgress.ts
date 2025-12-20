@@ -114,7 +114,7 @@ export function createInProgressCommand() {
       const jsonOutput = Boolean(options.json ?? command.parent?.getOptionValue('json'));
       const verbose = Boolean(options.verbose ?? command.parent?.getOptionValue('verbose'));
 
-      const { issues, source } = loadInProgressIssues(verbose);
+      const { issues } = loadInProgressIssues(verbose);
 
       if (jsonOutput) {
         emitJson(issues);
