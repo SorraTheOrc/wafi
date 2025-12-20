@@ -83,11 +83,11 @@ After `npm run build`, run `npm link` to make the `waif` command available globa
 npm link
 ```
 
-Ensure the link directory is on your PATH:
+Ensure the environment will load the global npm bin directory by adding it to your `PATH`. You can use `direnv` to manage this automatically. Example `.envrc`:
 
 ```bash
-  sudo apt install direnv  # if not already installed
-  echo 'export PATH=$PWD/.npm-global/bin:$PATH' > .envrc
+sudo apt install direnv  # if not already installed
+direnv allow .
 ```
 
 ## Development

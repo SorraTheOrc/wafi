@@ -7,7 +7,7 @@
   },
   "type": "module",
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "eval \"$(direnv export bash)\" && tsc --project tsconfig.json",
     "start": "tsx src/index.ts",
     "test": "npm run build && vitest run"
   },
