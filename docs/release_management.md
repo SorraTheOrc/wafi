@@ -214,12 +214,3 @@ waif next
 - Decide whether to generate release notes automatically from `CHANGELOG.md`.
 - Decide whether to enforce version/tag correctness in CI (recommended).
 
-- Install/use the released artifact and verify:
-  - `waif --version` prints `vX.Y.Z`
-  - core commands still function (`waif --help`, `waif next`, etc.)
-
-## Open Questions / Follow-ups
-
-- Decide whether releases are published to npm, GitHub Releases, or both.
-- Decide whether to generate release notes automatically from `CHANGELOG.md`.
-- Decide whether to enforce version/tag correctness in CI (recommended).
