@@ -26,7 +26,7 @@ issue-prefix: "wf"
 # json: false
 
 # Default actor for audit trails (overridden by BD_ACTOR or --actor)
-actor: "WAIF-Bot"
+actor: "WAIF Bot"
 
 # Path to database (overridden by BEADS_DB or --db)
 # db: ""
