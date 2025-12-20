@@ -4,12 +4,13 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/start-workflow-tmux.sh [--session <name>] [--window <name>]
+  scripts/start-workflow-tmux.sh [--restart] [--session <name>] [--window <name>]
 
 Starts (or reuses) a tmux session and creates one pane per workflow agent
 (described in docs/Workflow.md) plus a user pane.
 
 Options:
+  --restart         kill tmux server first (outside tmux only)
   --session <name>  tmux session name (default: waif-workflow)
   --window <name>   tmux window name (default: agents)
   -h, --help        show this help
@@ -22,9 +23,14 @@ EOF
 
 SESSION="waif-workflow"
 WINDOW="agents"
+RESTART=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --restart)
+      RESTART=1
+      shift
+      ;;
     --session)
       SESSION="${2:-}"
       shift 2
@@ -113,7 +119,7 @@ pane_bootstrap() {
     fi
     local wt_dir="$repo_root/$actor_name"
     # Export BEADS_NO_DAEMON and BD_ACTOR, cd into worktree, run waif startWork.
-    tmux send-keys -t "$pane_id" "cd \"$wt_dir\"; export BEADS_NO_DAEMON=1; export BD_ACTOR=\"$actor_name\"; clear; echo \"[$label] Starting waif startWork in $wt_dir\"; waif startWork \"$actor_name\"" C-m
+    tmux send-keys -t "$pane_id" "cd \"$wt_dir\"; export BEADS_NO_DAEMON=1; export BD_ACTOR=\"$actor_name\"; clear; waif startWork \"$actor_name\"" C-m
   else
     tmux send-keys -t "$pane_id" "cd \"$repo_root\"; clear; echo \"[User] Shell ready in repo root.\"" C-m
   fi
@@ -167,7 +173,12 @@ if [[ -n "${TMUX:-}" ]]; then
   exit 0
 fi
 
-# Not inside tmux: create/reuse session, then attach.
+# Not inside tmux: optionally restart server, then create/reuse session and attach.
+if [[ "$RESTART" -eq 1 ]]; then
+  echo "Restarting tmux server..." >&2
+  tmux kill-server >/dev/null 2>&1 || true
+fi
+
 if tmux has-session -t "$SESSION" 2>/dev/null; then
   echo "Reusing existing tmux session: $SESSION" >&2
 else
