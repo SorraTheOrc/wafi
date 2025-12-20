@@ -40,6 +40,7 @@ describe('waif next', () => {
         WAIF_ISSUES_PATH: tmpIssues,
         WAIF_IN_PROGRESS_JSON: inProgressPayload,
         WAIF_CLIPBOARD_CMD: process.execPath,
+        WAIF_NO_COLOR: '1',
         PATH: '',
       },
     });

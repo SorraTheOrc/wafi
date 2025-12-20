@@ -280,9 +280,10 @@ function selectTop(issues: Issue[], bv: BvResult, verbose: boolean) {
 export function createNextCommand() {
   const cmd = new Command('next');
   cmd
-    .description('Return the single best open, unblocked issue to work on now')
+    .description('Return the single best open, unblocked issue to work on now (copies issue id to clipboard)')
     .option('--json', 'Emit JSON output')
     .option('--verbose', 'Emit debug logs to stderr')
+    .option('--no-clipboard', 'Disable copying the recommended issue id to clipboard')
     .action((options, command) => {
       const jsonOutput = Boolean(options.json ?? command.parent?.getOptionValue('json'));
       const verbose = Boolean(options.verbose ?? command.parent?.getOptionValue('verbose'));
@@ -291,9 +292,12 @@ export function createNextCommand() {
       const bv = loadBvScores(verbose);
        const top = selectTop(issues, bv, verbose);
 
-       const clipboardResult = copyToClipboard(top.issue.id);
-       if (!clipboardResult.ok && verbose) {
-         process.stderr.write(`[debug] clipboard copy failed: ${clipboardResult.error}\n`);
+       const clipboardEnabled = Boolean(options.clipboard ?? true);
+       if (clipboardEnabled) {
+         const clipboardResult = copyToClipboard(top.issue.id);
+         if (!clipboardResult.ok && verbose) {
+           process.stderr.write(`[debug] clipboard copy failed: ${clipboardResult.error}\n`);
+         }
        }
 
        const waif = {

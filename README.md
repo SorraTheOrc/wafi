@@ -39,7 +39,7 @@ When interacting with agents, the `waif` CLI tool is designed to integrate with 
 
 ## WAIF CLI Features
 
-- `waif next`: prints three human sections (In Progress table, Recommended Summary table, Recommended Detail) and supports `--json` output for automation.
+- `waif next`: prints three human sections (In Progress table, Recommended Summary table, Recommended Detail), copies the recommended issue id to your clipboard (best-effort), and supports `--json` output for automation.
 - `waif --version` (alias: `-v`): prints the CLI version and exits.
 
 ### Symbols config
