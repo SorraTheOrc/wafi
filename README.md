@@ -31,16 +31,16 @@ The project provides a CLI tool (`waif`) that humans, agents, and even old-schoo
 
 - Launch the multi-pane workflow runner:
 
-	```bash
-	./scripts/start-workflow-tmux.sh --session waif-workflow --window agents
-	```
+  ```bash
+  ./scripts/start-workflow-tmux.sh --session waif-workflow --window agents
+  ```
 
-	This creates/reuses a tmux window with one pane per role (pm, design, build, docs, review, user). Each agent pane uses a dedicated git worktree and starts `waif startWork <role>` in that directory so prompts and titles reflect the role.
+  This creates/reuses a tmux window with one pane per role (pm, design, build, docs, review, user). Each agent pane uses a dedicated git worktree and starts `waif startWork <role>` in that directory so prompts and titles reflect the role.
 
 - `waif startWork <agent>` sets the tmux pane title (when inside tmux), prints a brief welcome, and starts an interactive shell with prompt `waif> `. Flags:
-	- `--norc` to skip rc/profile loading (defaults to loading your shell rc).
-	- `--env KEY=VAL` to inject env vars.
-	- `--init "command"` to run setup commands before the shell starts.
+  - `--norc` to skip rc/profile loading (defaults to loading your shell rc).
+  - `--env KEY=VAL` to inject env vars.
+  - `--init "command"` to run setup commands before the shell starts.
 
 When interacting with agents, the `waif` CLI tool is designed to integrate with **OpenCode** (an open source agent framework). The CLI automates invoking agents with pre-defined prompts and handling outputs according to the workflow conventions. However, use of the CLI is optional; humans can also interact with agents directly via chat or other interfaces.
 
