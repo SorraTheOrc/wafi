@@ -133,7 +133,7 @@ Commands:
 
 ```bash
 git add package.json docs/CHANGELOG.md
-git commit -m "wf-cr4: add release notes and bump version to v1.2.3"
+git commit -m "release: prepare version v1.2.3"
 git push -u origin HEAD
 # Create PR (GitHub CLI)
 gh pr create --title "Release v1.2.3" --body "Release notes and version bump" --base main
