@@ -134,6 +134,13 @@ Pull latest and rebuild the local binary.
 (cd ../opencode && bun install)
 (cd ../opencode/packages/opencode && bun run build -- --single)
 
-cp "$(ls ../opencode/packages/opencode/dist/*/bin/opencode | head -n 1)" ~/.local/bin/opencode
+OPENCODE_BIN="$(find ../opencode/packages/opencode/dist -type f -path '*/bin/opencode' -print -quit)"
+
+if [ -z "$OPENCODE_BIN" ]; then
+  echo "Error: could not find built opencode binary under ../opencode/packages/opencode/dist" >&2
+  exit 1
+fi
+
+cp "$OPENCODE_BIN" ~/.local/bin/opencode
 chmod +x ~/.local/bin/opencode
 ```
