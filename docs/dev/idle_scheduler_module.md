@@ -65,7 +65,7 @@ You can configure intervals via either positional arguments (frequency, variance
 ## Example Output
 
 ```
-[idle task] Running at Sat Dec 20 00:00:00 UTC 2025
+[idle task] Running at Mon Jan 01 12:00:00 UTC 2024
 waif> 
 ```
 
