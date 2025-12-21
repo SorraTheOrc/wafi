@@ -63,24 +63,24 @@ fi
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
 # --- Config loading ---
-# Load agent config from YAML via Python helper.
+# Load agent config from YAML via Node.js helper.
 # Falls back to built-in defaults if config is missing.
 
 load_agents_config() {
-  local parser_script="$repo_root/scripts/parse-workflow-config.py"
+  local parser_script="$repo_root/scripts/parse-workflow-config.js"
   
   if [[ ! -f "$parser_script" ]]; then
     echo "Error: Config parser not found: $parser_script" >&2
     exit 1
   fi
   
-  if ! command -v python3 >/dev/null 2>&1; then
-    echo "Error: python3 is required to parse workflow config." >&2
+  if ! command -v node >/dev/null 2>&1; then
+    echo "Error: node is required to parse workflow config." >&2
     exit 1
   fi
   
   local config_json
-  if ! config_json=$(python3 "$parser_script" 2>&1); then
+  if ! config_json=$(node "$parser_script" 2>&1); then
     echo "Error parsing workflow config:" >&2
     echo "$config_json" >&2
     exit 2
@@ -89,7 +89,7 @@ load_agents_config() {
   echo "$config_json"
 }
 
-# Parse JSON array into bash arrays using python (avoids jq dependency)
+# Parse JSON array into bash arrays using node (avoids jq dependency)
 # Sets global arrays: AGENT_NAMES, AGENT_LABELS, AGENT_ROLES, AGENT_WORKTREES,
 #                     AGENT_IS_USERS, AGENT_IDLE_TASKS, AGENT_IDLE_FREQS, AGENT_IDLE_VARS
 # Also sets associative array: AGENT_ENVS (name -> "KEY=val KEY2=val2" string)
@@ -106,34 +106,33 @@ declare -A AGENT_ENVS=()
 parse_agents_json() {
   local json="$1"
   
-  # Use Python to parse JSON and output shell-friendly format
+  # Use Node.js to parse JSON and output shell-friendly format
   local parsed
-  parsed=$(python3 -c "
-import json
-import sys
-import shlex
-
-data = json.loads(sys.stdin.read())
-for agent in data:
-    name = agent['name']
-    label = agent['label']
-    role = agent['role'] if agent['role'] else ''
-    worktree = '1' if agent['worktree'] else '0'
-    is_user = '1' if agent['is_user'] else '0'
-    
-    idle = agent.get('idle') or {}
-    idle_task = idle.get('task', '')
-    idle_freq = str(idle.get('frequency', 30))
-    idle_var = str(idle.get('variance', 10))
-    
-    # Format env vars as KEY=value pairs (space-separated)
-    env_pairs = []
-    for k, v in agent.get('env', {}).items():
-        env_pairs.append(f'{k}={shlex.quote(v)}')
-    env_str = ' '.join(env_pairs)
-    
-    # Output tab-separated fields
-    print(f'{name}\t{label}\t{role}\t{worktree}\t{is_user}\t{idle_task}\t{idle_freq}\t{idle_var}\t{env_str}')
+  parsed=$(node -e "
+const data = JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf-8'));
+for (const agent of data) {
+  const name = agent.name;
+  const label = agent.label;
+  const role = agent.role || '';
+  const worktree = agent.worktree ? '1' : '0';
+  const is_user = agent.is_user ? '1' : '0';
+  
+  const idle = agent.idle || {};
+  const idle_task = idle.task || '';
+  const idle_freq = String(idle.frequency || 30);
+  const idle_var = String(idle.variance || 10);
+  
+  // Format env vars as KEY=value pairs (space-separated, shell-quoted)
+  const envPairs = Object.entries(agent.env || {}).map(([k, v]) => {
+    // Simple shell quoting for values
+    const quoted = String(v).replace(/'/g, \"'\\\\''\");
+    return k + \"='\" + quoted + \"'\";
+  });
+  const env_str = envPairs.join(' ');
+  
+  // Output tab-separated fields
+  console.log([name, label, role, worktree, is_user, idle_task, idle_freq, idle_var, env_str].join('\t'));
+}
 " <<< "$json")
   
   while IFS=$'\t' read -r name label role worktree is_user idle_task idle_freq idle_var env_str; do
