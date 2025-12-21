@@ -81,24 +81,24 @@ agents:
     env:
       BD_ACTOR: pixel
 
-  # User pane - interactive shell for the Producer
-  - name: user
-    label: User
-    window: core
-    is_user: true
-    worktree: false
-
-  # === SPECIALIST WINDOW ===
-  # On-demand agents for specific tasks (QA, DevOps, meta-work)
-
   # Probe (QA AI) - quality gates, test strategy, and risk checks
   - name: probe
     label: Probe (QA)
     role: review
-    window: specialist
+    window: core
     worktree: true
     env:
       BD_ACTOR: probe
+
+  # === SPECIALIST WINDOW ===
+  # On-demand agents for specific tasks (DevOps, meta-work, user shell)
+
+  # User pane - interactive shell for the Producer
+  - name: user
+    label: User
+    window: specialist
+    is_user: true
+    worktree: false
 
   # Ship (DevOps AI) - CI, build, release readiness
   - name: ship
