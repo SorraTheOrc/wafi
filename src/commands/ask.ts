@@ -2,7 +2,7 @@ import { stdin as processStdin } from 'process';
 import { Command } from 'commander';
 import { CliError } from '../types.js';
 import { emitJson, logStdout } from '../lib/io.js';
-import { getClient, isEnabled } from '../lib/opencode.js';
+import { ensureClient, isEnabled, loadAgentMap } from '../lib/opencode.js';
 
 function readStdin(timeoutMs = 5000): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -49,22 +49,27 @@ export function createAskCommand() {
         throw new CliError('Missing prompt. Provide as argument or use - to read stdin', 2);
       }
 
-      // If OpenCode integration is enabled and available, use it.
+      // If OpenCode integration is enabled and available, ensure client and use it.
       if (isEnabled()) {
-        const client = await getClient();
+        const client = await ensureClient();
         if (client && typeof client.ask === 'function') {
+          const map = loadAgentMap();
+          const mappedAgent = map[agent] || agent;
           try {
-            const res = await client.ask(agent, promptText);
+            const res = await client.ask(mappedAgent, promptText);
             const md = res?.markdown ?? String(res);
             if (jsonOutput) {
-              emitJson({ agent, promptLength: promptText.length, responseMarkdown: md });
+              emitJson({ agent: mappedAgent, promptLength: promptText.length, responseMarkdown: md });
             } else {
               logStdout(md);
             }
             return;
           } catch (e) {
+            process.stderr.write(`[warn] OpenCode ask failed: ${e instanceof Error ? e.message : String(e)}\n`);
             // Fall through to placeholder
           }
+        } else {
+          process.stderr.write('[debug] OpenCode client unavailable, falling back to placeholder.\n');
         }
       }
 
