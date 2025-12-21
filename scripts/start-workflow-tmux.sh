@@ -357,7 +357,7 @@ pane_bootstrap_from_config() {
     # Escape the idle_task for embedding in the function definition
     local escaped_task
     escaped_task=$(printf '%q' "$idle_task")
-    idle_cmd="function idle_task(){ eval $escaped_task; }; source \"$repo_root/scripts/idle-scheduler.sh\" $idle_freq $idle_var"
+    idle_cmd="stty -echo 2>/dev/null; function idle_task(){ eval $escaped_task; }; source \"$repo_root/scripts/idle-scheduler.sh\" $idle_freq $idle_var; stty echo 2>/dev/null"
     
     # Send idle setup after a brief delay to let the new shell start
     (sleep 1; tmux send-keys -t "$pane_id" "$idle_cmd" C-m) &
@@ -541,9 +541,42 @@ if [[ "$RESTART" -eq 1 ]]; then
   tmux kill-server >/dev/null 2>&1 || true
 fi
 
+should_create=0
+
 if tmux has-session -t "$SESSION" 2>/dev/null; then
-  echo "Reusing existing tmux session: $SESSION" >&2
+  echo "tmux session '$SESSION' already exists." >&2
+  echo "Choose an option:" >&2
+  echo "  [o] Open existing session" >&2
+  echo "  [r] Reset session (kill and recreate)" >&2
+  echo "  [c] Cancel" >&2
+  printf "> " >&2
+  read -r -n1 choice
+  echo "" >&2
+  case "${choice,,}" in
+    o|"")
+      echo "Opening existing tmux session: $SESSION" >&2
+      tmux attach -t "$SESSION"
+      exit 0
+      ;;
+    r)
+      echo "Resetting tmux session: $SESSION" >&2
+      tmux kill-session -t "$SESSION" >/dev/null 2>&1 || true
+      should_create=1
+      ;;
+    c)
+      echo "Canceled by user." >&2
+      exit 0
+      ;;
+    *)
+      echo "Unrecognized selection. Canceling." >&2
+      exit 1
+      ;;
+  esac
 else
+  should_create=1
+fi
+
+if (( should_create == 1 )); then
   echo "Creating new tmux session: $SESSION" >&2
   tmux new-session -d -s "$SESSION" -n "temp" -c "$repo_root" || {
     echo "Error: Failed to create tmux session" >&2
@@ -574,3 +607,4 @@ if [[ "${#WARNINGS[@]}" -gt 0 ]]; then
 fi
 
 tmux attach -t "$SESSION"
+
