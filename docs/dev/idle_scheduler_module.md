@@ -35,14 +35,24 @@ Key properties:
    source "$HOME/.bashrc.d/idle-scheduler.sh" 45 15
    ```
 
-4. The tmux workflow helper (`scripts/start-workflow-tmux.sh`) automatically loads this module in the PM pane. It defines:
+4. The tmux workflow helper (`scripts/start-workflow-tmux.sh`) automatically loads this module based on the `config/workflow_agents.yaml` configuration. For agents with an `idle` block, it defines:
 
    ```bash
-   idle_task() { clear; waif in-progress; }
-   source "$REPO_ROOT/scripts/idle-scheduler.sh"
+   idle_task() { <configured task command>; }
+   source "$REPO_ROOT/scripts/idle-scheduler.sh" <frequency> <variance>
    ```
 
-   so the PM terminal periodically refreshes the in-progress table even while idle.
+   For example, the default PM agent config:
+
+   ```yaml
+   - name: pm
+     idle:
+       task: "clear; waif in-progress"
+       frequency: 30
+       variance: 10
+   ```
+
+   Results in the PM terminal periodically refreshing the in-progress table even while idle.
 
 ## Configuration
 
@@ -79,3 +89,25 @@ Override `idle_task()` to change the output destination or action.
   2. Press Enter repeatedly; observe randomized `idle_task` output between prompts.
   3. Run a long-lived command (e.g., `sleep 30`) to confirm no mid-command invocations.
   4. Open a second terminal to confirm per-session independence.
+
+## Config-Driven Integration (wf-urb)
+
+The idle scheduler is now integrated with `config/workflow_agents.yaml`. Each agent can optionally define an `idle` block:
+
+```yaml
+agents:
+  - name: my_agent
+    idle:
+      task: "echo 'Idle task running'"  # Shell command to execute
+      frequency: 30                      # Target interval (seconds)
+      variance: 10                       # +/- randomization range
+```
+
+When `start-workflow-tmux.sh` spawns the agent pane, it:
+1. Defines an `idle_task()` function with the configured command
+2. Sources `scripts/idle-scheduler.sh` with the configured frequency/variance
+3. The scheduler then runs the task at randomized intervals
+
+If no `idle` block is specified, no idle scheduler is loaded for that agent.
+
+See `docs/Workflow.md` for the full config schema and examples.

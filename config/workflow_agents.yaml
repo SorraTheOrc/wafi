@@ -1,0 +1,110 @@
+# Workflow Agents Configuration
+# 
+# This file defines the tmux panes created by start-workflow-tmux.sh.
+# Each agent entry specifies how to set up and run an agent pane.
+#
+# Schema:
+#   agents:           # Required: list of agent definitions
+#     - name: string  # Required: unique agent identifier (used for worktree, BD_ACTOR)
+#       label: string # Optional: display label for tmux pane title (defaults to name)
+#       role: string  # Optional: agent role passed to waif startWork (defaults to name)
+#       window: string # Optional: tmux window name (default: "core"); agents with same window are grouped
+#       worktree: bool # Optional: if true, use dedicated worktree (default: true for agents, false for user)
+#       env:          # Optional: environment variables to set before starting
+#         KEY: value
+#       idle:         # Optional: idle scheduler configuration
+#         task: string      # Shell command to run when idle
+#         frequency: int    # Target seconds between runs (default: 30)
+#         variance: int     # +/- variance in seconds (default: 10)
+#       is_user: bool # Optional: if true, this is the user pane (no waif startWork)
+#
+# Environment variable override:
+#   Set WORKFLOW_AGENTS_CONFIG to use an alternate config file path.
+#
+# Required:
+#   This config file is required. If missing, the script will error with instructions.
+#   Use 'node scripts/parse-workflow-config.js --defaults' to see an example config.
+#
+# Agent definitions match .opencode/agent/*.md files.
+# Agents are grouped into windows: "core" for daily workflow, "specialist" for on-demand.
+
+agents:
+  # === CORE WINDOW ===
+  # Primary agents for typical feature development workflow
+
+  # Map (PM AI) - primary interface point for Producer
+  - name: map
+    label: Map (PM)
+    role: pm
+    window: core
+    worktree: true
+    env:
+      BD_ACTOR: map
+    idle:
+      task: "clear; waif in-progress"
+      frequency: 30
+      variance: 10
+
+  # Muse (Designer AI) - design variants and UX flows
+  - name: muse
+    label: Muse (Design)
+    role: design
+    window: core
+    worktree: true
+    env:
+      BD_ACTOR: muse
+
+  # Patch (Implementation AI) - implement small, correct changes
+  - name: patch
+    label: Patch (Impl)
+    role: build
+    window: core
+    worktree: true
+    env:
+      BD_ACTOR: patch
+
+  # Scribbler (Docs AI) - maintain PRDs and repo docs
+  - name: scribbler
+    label: Scribbler (Docs)
+    role: docs
+    window: core
+    worktree: true
+    env:
+      BD_ACTOR: scribbler
+
+  # Pixel (Art AI) - asset generation and review support
+  - name: pixel
+    label: Pixel (Art)
+    role: art
+    window: core
+    worktree: true
+    env:
+      BD_ACTOR: pixel
+
+  # Probe (QA AI) - quality gates, test strategy, and risk checks
+  - name: probe
+    label: Probe (QA)
+    role: review
+    window: core
+    worktree: true
+    env:
+      BD_ACTOR: probe
+
+  # === SPECIALIST WINDOW ===
+  # On-demand agents for specific tasks (DevOps, meta-work, user shell)
+
+  # User pane - interactive shell for the Producer
+  - name: user
+    label: User
+    window: specialist
+    is_user: true
+    worktree: false
+
+  # Ship (DevOps AI) - CI, build, release readiness
+  - name: ship
+    label: Ship (DevOps)
+    role: devops
+    window: specialist
+    worktree: true
+    env:
+      BD_ACTOR: ship

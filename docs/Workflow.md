@@ -296,6 +296,57 @@ This workflow makes PRDs the central coordination artifact and uses repo-native 
 - Implementation proceeds in small increments with feature-flag gating
 - `main` remains releasable; releases are tagged and documented
 
+## Tmux Workflow Configuration
+
+The multi-agent tmux workflow can be launched with `scripts/start-workflow-tmux.sh`. This script creates a tmux session with one pane per workflow agent (PM, design, build, docs, review) plus a user pane.
+
+### Configuration
+
+Agent panes are configured via `config/workflow_agents.yaml`. This file defines:
+
+- **Agent list**: Which agents to spawn and in what order
+- **Worktree settings**: Whether each agent uses a dedicated git worktree
+- **Environment variables**: Per-agent env overrides (e.g., `BD_ACTOR`)
+- **Idle scheduler**: Optional idle task commands with frequency/variance settings
+
+Example configuration:
+
+```yaml
+agents:
+  - name: pm
+    label: PM agent
+    role: pm
+    worktree: true
+    env:
+      BD_ACTOR: pm
+    idle:
+      task: "clear; waif in-progress"
+      frequency: 30
+      variance: 10
+
+  - name: design
+    label: Design agent
+    role: design
+    worktree: true
+    env:
+      BD_ACTOR: design
+
+  - name: user
+    label: User
+    is_user: true
+    worktree: false
+```
+
+### Environment Variables
+
+- `WORKFLOW_AGENTS_CONFIG`: Path to an alternate config file (overrides default location)
+
+### Required Config
+
+The `config/workflow_agents.yaml` file is required. If it is missing, the script will error with instructions to create it. Use `node scripts/parse-workflow-config.js --defaults` to see an example config.
+
+See `docs/dev/idle_scheduler_module.md` for details on the idle scheduler integration.
+
 ## Next Steps
 
 - Decide a standard PRD filename convention (per product vs. per feature) and enforce it.
