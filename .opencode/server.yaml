@@ -1,0 +1,9 @@
+server:
+  host: "127.0.0.1"
+  port: 4096
+  enable: true
+  defaultAgent: "map"
+  provider: "github-copilot"
+  model: "gpt-5-mini"
+
+  description: "Local OpenCode server config for development. Enable by setting OPENCODE_ENABLED=1 or editing this file."

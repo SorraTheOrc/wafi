@@ -56,6 +56,7 @@ When interacting with agents, the `waif` CLI tool is designed to integrate with 
 
 - `waif next`: prints three human sections (In Progress table, Recommended Summary table, Recommended Detail), copies the recommended issue id to your clipboard (best-effort), and supports `--json` output for automation.
 - `waif --version` (alias: `-v`): prints the CLI version and exits.
+- `waif ask [prompt] [--agent <name>] [--json]`: one-shot ask that integrates with OpenCode; defaults to agent `map`, provider `github-copilot`, model `gpt-5-mini`, host `127.0.0.1`, port `4096`. Env overrides: `OPENCODE_ENABLED`, `OPENCODE_HOST`, `OPENCODE_PORT`, `OPENCODE_DEFAULT_AGENT`, `OPENCODE_PROVIDER`, `OPENCODE_MODEL`. If no `--agent` is provided and the first word of the prompt matches a key in `.opencode/agent_map.yaml`, that word is used as the agent and removed from the prompt.
 
 ### Symbols config
 
