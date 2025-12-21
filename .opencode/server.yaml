@@ -1,5 +1,0 @@
-server:
-  host: "localhost"
-  port: 4096
-  enable: true
-  description: "Local OpenCode server config for development. Enable by setting OPENCODE_ENABLED=1 or editing this file."
