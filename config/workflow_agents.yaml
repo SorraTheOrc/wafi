@@ -1,0 +1,70 @@
+# Workflow Agents Configuration
+# 
+# This file defines the tmux panes created by start-workflow-tmux.sh.
+# Each agent entry specifies how to set up and run an agent pane.
+#
+# Schema:
+#   agents:           # Required: list of agent definitions
+#     - name: string  # Required: unique agent identifier (used for worktree, BD_ACTOR)
+#       label: string # Optional: display label for tmux pane title (defaults to name)
+#       role: string  # Optional: agent role passed to waif startWork (defaults to name)
+#       worktree: bool # Optional: if true, use dedicated worktree (default: true for agents, false for user)
+#       env:          # Optional: environment variables to set before starting
+#         KEY: value
+#       idle:         # Optional: idle scheduler configuration
+#         task: string      # Shell command to run when idle
+#         frequency: int    # Target seconds between runs (default: 30)
+#         variance: int     # +/- variance in seconds (default: 10)
+#       is_user: bool # Optional: if true, this is the user pane (no waif startWork)
+#
+# Environment variable override:
+#   Set WORKFLOW_AGENTS_CONFIG to use an alternate config file path.
+#
+# Fallback behavior:
+#   If this file is missing or WORKFLOW_AGENTS_CONFIG points to a non-existent file,
+#   start-workflow-tmux.sh falls back to its built-in defaults (pm, design, build, docs, review, user).
+
+agents:
+  - name: pm
+    label: PM agent
+    role: pm
+    worktree: true
+    env:
+      BD_ACTOR: pm
+    idle:
+      task: "clear; waif in-progress"
+      frequency: 30
+      variance: 10
+
+  - name: design
+    label: Design agent
+    role: design
+    worktree: true
+    env:
+      BD_ACTOR: design
+
+  - name: build
+    label: Build agent
+    role: build
+    worktree: true
+    env:
+      BD_ACTOR: build
+
+  - name: docs
+    label: Doc agent
+    role: docs
+    worktree: true
+    env:
+      BD_ACTOR: docs
+
+  - name: review
+    label: Review agent
+    role: review
+    worktree: true
+    env:
+      BD_ACTOR: review
+
+  - name: user
+    label: User
+    is_user: true
+    worktree: false
