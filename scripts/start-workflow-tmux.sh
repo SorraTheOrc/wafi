@@ -210,15 +210,26 @@ worktree_branch_name() {
   printf "worktree_%s" "$actor"
 }
 
+# Return a path for the actor's worktree. If the branch is already checked out
+# in any worktree, return that existing path; otherwise return the default
+# ./worktree_<actor> path under the repo root.
 worktree_dir_path() {
   local actor="$1"
-  printf "%s/worktree_%s" "$repo_root" "$actor"
-}
+  local branch
+  branch=$(worktree_branch_name "$actor")
 
-worktree_exists_for_branch() {
-  local branch="$1"
-  git -C "$repo_root" worktree list --porcelain | awk -v b="refs/heads/$branch" '\
-    $1=="branch" && $2==b {print 1; exit 0} END{exit 1}'
+  # Look for an existing worktree that has this branch checked out. The
+  # porcelain output lists 'worktree <path>' and 'branch refs/heads/<name>' pairs.
+  local existing
+  existing=$(git -C "$repo_root" worktree list --porcelain | awk -v b="refs/heads/$branch" '\
+    $1=="worktree"{p=$2} $1=="branch" && $2==b {print p; exit 0} END{exit 1}') || true
+
+  if [[ -n "$existing" ]]; then
+    printf "%s" "$existing"
+    return 0
+  fi
+
+  printf "%s/worktree_%s" "$repo_root" "$actor"
 }
 
 ensure_worktree() {
@@ -228,6 +239,7 @@ ensure_worktree() {
   local branch
   branch=$(worktree_branch_name "$actor")
 
+  # If the target directory already exists on disk, ensure it's a worktree.
   if [[ -d "$target_dir" ]]; then
     if git -C "$target_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
       return 0
@@ -237,12 +249,16 @@ ensure_worktree() {
     fi
   fi
 
-  if worktree_exists_for_branch "$branch" >/dev/null 2>&1; then
-    WARNINGS+=("[$actor] Branch '$branch' is already checked out in another worktree")
-    return 1
+  # If the branch is checked out in another worktree, reuse it instead of failing.
+  local existing
+  existing=$(git -C "$repo_root" worktree list --porcelain | awk -v b="refs/heads/$branch" '\
+    $1=="worktree"{p=$2} $1=="branch" && $2==b {print p; exit 0} END{exit 1}') || true
+  if [[ -n "$existing" ]]; then
+    WARNINGS+=("[$actor] Branch '$branch' already checked out at: $existing")
+    return 0
   fi
 
-  # Try to create the worktree
+  # Try to create the worktree at the desired path
   local output
   if git -C "$repo_root" show-ref --verify --quiet "refs/heads/$branch"; then
     if ! output=$(git -C "$repo_root" worktree add "$target_dir" "$branch" 2>&1); then
