@@ -2,6 +2,7 @@ import { stdin as processStdin } from 'process';
 import { Command } from 'commander';
 import { CliError } from '../types.js';
 import { emitJson, logStdout } from '../lib/io.js';
+import { getClient, isEnabled } from '../lib/opencode.js';
 
 function readStdin(timeoutMs = 5000): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -48,7 +49,26 @@ export function createAskCommand() {
         throw new CliError('Missing prompt. Provide as argument or use - to read stdin', 2);
       }
 
-      // Minimal placeholder implementation for MVP: echo back a Markdown formatted response.
+      // If OpenCode integration is enabled and available, use it.
+      if (isEnabled()) {
+        const client = await getClient();
+        if (client && typeof client.ask === 'function') {
+          try {
+            const res = await client.ask(agent, promptText);
+            const md = res?.markdown ?? String(res);
+            if (jsonOutput) {
+              emitJson({ agent, promptLength: promptText.length, responseMarkdown: md });
+            } else {
+              logStdout(md);
+            }
+            return;
+          } catch (e) {
+            // Fall through to placeholder
+          }
+        }
+      }
+
+      // Fallback placeholder implementation for MVP: echo back a Markdown formatted response.
       const md = `# Response from ${agent}\n\n${promptText}\n`;
 
       if (jsonOutput) {
