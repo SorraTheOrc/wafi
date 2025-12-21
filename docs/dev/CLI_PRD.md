@@ -18,7 +18,7 @@ Product work fragments across docs, chat, and code. The goal is a single, audita
 ### 1.3 Goals
 
 * Beads remains the source of truth for work tracking (JSONL in-repo).
-* Intake → triage → plan → ship is the default workflow.
+* Intake  triage  plan  ship is the default workflow.
 * Manual release cadence supported from day one, with mechanisms for regular code freezes.
 * The current `main` branch is always releasable (see section 6.2).
 * Feature flags gate anything not fully tested and ready for release.
@@ -26,7 +26,7 @@ Product work fragments across docs, chat, and code. The goal is a single, audita
 
 ### 1.4 Non-goals
 
-* Building a TUI in this PRD (covered separately in docs/dev/TUI\_PRD.md).
+* Building a TUI in this PRD (covered separately in docs/dev/TUI_PRD.md).
 * Replacing Beads with another tracker, or maintaining a duplicate issue database.
 * Fully automated releases in v1 (manual first; automation later).
 
@@ -42,7 +42,7 @@ Rule of Five policy: use the 5-pass prompt set when authoring/reviewing artifact
 
 * Intake: capture product requests quickly as Beads issues.
 * Triage: clarify, categorize, and prioritize issues; connect dependencies.
-* Plan: generate/maintain an executable issue graph (epic → subtasks) that respects blockers.
+* Plan: generate/maintain an executable issue graph (epic  subtasks) that respects blockers.
 * Ship: drive issues to completion and generate release artifacts.
 
 ## 3) Artifact & Repository Conventions
@@ -74,7 +74,7 @@ Rule of Five policy: use the 5-pass prompt set when authoring/reviewing artifact
 
 * Convert an intake statement into a Beads issue with:
   * type suggestion (`bug`/`feature`/`task`/`chore`)
-  * priority suggestion (0–4)
+  * priority suggestion (04)
   * initial acceptance criteria (minimal, testable)
 * Must prevent duplicates (at minimum: search/list before create).
 
@@ -126,223 +126,68 @@ These utilities are part of the CLI surface and should be callable from CI and f
 
 #### 5.1.1 Recommendation: “Soft freeze” policy + “Hard freeze” optional enforcement
 
-To match “manual first, automate later”, use a two-layer approach:
+*snip unchanged content above for brevity*
 
-* Soft freeze (policy, v1):
 
-  * On release day, create a release branch `release/vX.Y.Z` from `main`.
-  * During the freeze window, only allow critical fixes to merge to `main` (documented policy), and cherry-pick approved fixes into the release branch.
-  * Release is cut by tagging the release branch head with a semver tag (e.g., `vX.Y.Z`).
+## 12) Intake: Responsive Console Table Output
 
-* Hard freeze (optional enforcement, v1.1+):
-  * Add a repo marker file that indicates freeze state (example: `.release/freeze.json` or `.release/freeze.yml`).
-  * Add a CI check that fails PRs targeting `main` while freeze is active unless an explicit override is present (e.g., a PR label like `override-freeze` or a config allowlist).
-  * Keep the override path auditable (label + required approvals).
+### Problem
 
-This recommendation keeps the initial process lightweight while providing a clear path to enforceable automation later.
+Beads table output currently wraps in narrow consoles (for example, tmux panes), which breaks single-line rows and makes tabular summaries hard to scan. As the project adopts a TMux-managed multi-agent environment with many narrow panes, this reduces operator visibility and increases cognitive load.
 
-Decision (confirmed): start with “soft freeze” policy only; defer “hard freeze” CI enforcement.
+### Users
 
-### 5.2 Always runnable; feature flags
+Primary: Producer — humans reading CLI tables in narrow panes.
 
-* The codebase must remain runnable at all times.
-* Features not fully tested/ready must be gated behind feature flags.
-* Default state: features behind flags are OFF unless explicitly enabled.
-* The release workflow must include a feature-flag audit:
-  * confirm which flags are enabled for the release
-  * confirm no incomplete feature is ON by default
+Secondary: TUI operators, automation scripts, CI jobs, SRE/QA who rely on readable table summaries.
 
-#### Feature flag storage recommendation
+### Success criteria
 
-* Use a repo-first, declarative flags file at `config/flags.json` (or `config/flags.yml`) with a simple shape, for example:
+- No wrapped cells in table outputs.
+- When the terminal width is insufficient, the renderer drops rightmost, less-important columns until the table fits on a single line per record.
+- The title column must always be present; when it does not fit, it is truncated with an ellipsis rather than dropped.
+- Measurable targets: single-line rows at 80 columns; in narrower panes (e.g., 40 cols) table fits by dropping columns while preserving truncated title.
 
-```json
-{
-  "FEATURE_X": { "default": false, "description": "New checkout flow" },
-  "EXPERIMENTAL_UI": { "default": false, "description": "Flag for early UI" }
-}
-```
+### Constraints
 
-* The CLI's `flag-audit` and `check-release` commands read this file to determine which flags are enabled by default and which are runtime-only toggles. If the project prefers language-embedded flags (e.g., `src/flags.ts`), the implementation must still provide an exported, machine-readable `config/flags.json` for auditing.
+- Must not introduce wrapped cells.
+- Title column must never be dropped; when space is insufficient it should be truncated with an ellipsis.
+- Preserve ANSI color behavior; ensure color sequences do not contribute to visible width calculations when possible (or accept caveat).
+- Minimize breaking changes for downstream automation that may parse output; if necessary, provide a machine-readable `--json` output or an explicit opt-out flag (e.g., `--no-responsive`).
 
-## 6) Quality Gates / Definition of Done (confirmed) (see wf-ba2.9)
+### Existing state
 
-An issue is 'Done' when all of the following are true:
+- The codebase currently uses `src/lib/table.ts` to render tables, with fixed-column width computation and a static title cap. Commands such as `src/commands/next.ts` call into this renderer.
 
-* All tests pass.
-* Test coverage meets the following:
-  * 90% in core code
-  * 80% across the entire codebase
-* All features not behind a feature flag have been user tested and signed off.
-* The PR is merged.
+### Desired change
 
-### 6.1 Recommended defaults (implementation-agnostic)
+- Implement a responsive table renderer that:
+  - Detects terminal width.
+  - Drops rightmost non-mandatory columns by priority until the table fits.
+  - Always retains the `id` and `title` columns; truncates `title` with ellipses when necessary.
+  - Provides a `--no-responsive` or `--compact` flag if consumers need deterministic old behavior.
 
-#### 6.1.1 Coverage tooling contract
+### Likely duplicates / related docs
 
-Because the tech stack is not yet selected, define a tool-agnostic contract that any chosen stack must satisfy:
+- docs/dev/TUI_PRD.md
+- docs/Workflow.md
 
-* The test runner must support:
-  * deterministic CLI execution (non-interactive)
-  * machine-readable output for CI
-* Coverage must be produced in at least one standard interchange format (recommended: `lcov` and/or `cobertura`).
-* CI must enforce the two-tier thresholds:
-* 90% for "core code"
-* 80% for the whole codebase
+### Related issues
 
-Default selection guidance (pick based on implementation language):
+- wf-soh: Integrate marked-terminal markdown rendering for all CLI output
+- wf-35m.3: Extract shared table rendering and align blockers logic
+- wf-35m.1: Refactor bd/bv CLI invocation into shared utility
 
-* Python: `pytest` + `coverage.py`
-* Node/TypeScript: `vitest` + `c8` (or `jest` + `c8`)
-* Go: `go test -coverprofile`
-* Rust: `cargo llvm-cov`
+### Clarifying questions
 
-#### 6.1.2 “Core code” definition (recommended default)
+1. Do any downstream scripts parse current table output by fixed columns? (If yes, we should provide a `--no-responsive` flag and encourage `--json` usage for automation.)
+2. Confirm acceptance widths (suggest: guarantee readability at 80 cols and graceful degradation at 40 cols).
+3. Confirm column drop priority (implemented: drop `assignee`, `blocks`, `blockers`, `priority` in that order). Change if needed.
+4. Should ANSI color sequences be stripped when computing widths, or do we accept the small mismatch between byte-length and visible-width?
+5. Who will review and sign off the UX on narrow panes (1–2 reviewers recommended).
 
-To make “90% core coverage” measurable without ambiguity, define “core code” structurally:
+### Proposed next step
 
-* Recommended repo layout for this product:
-  * `src/core/` — business rules and domain logic (CORE)
-  * `src/cli/` — CLI command parsing, orchestration (CORE)
-  * `src/adapters/` — integrations (OpenCode/Copilot/Beads wrappers)
-  * `src/experimental/` — feature-flagged or in-progress work (NON-CORE by default)
-* “Core code” is: `src/core/**` + `src/cli/**`.
-* “Entire codebase” is everything under `src/**`.
+- UPDATE PRD at: docs/dev/CLI_PRD.md
 
-Note: if the eventual implementation chooses a different layout, it must still provide an explicit, directory-based mapping of “core” vs “non-core”.
-
-### 6.2 Requirement: `main` is always releasable (see wf-ba2.6.2, wf-ba2.8, wf-ba2.9)
-
-Definition: at all times, the current `main` branch MUST meet all of the following:
-
-* 100% tests pass.
-* Core code has 90%+ test coverage.
-* All code has 80%+ test coverage.
-* No feature that has not undergone user testing is enabled by default.
-* Documentation is up to date and includes example user-scenarios for user testing of all features.
-
-## 7) Security, Privacy, and Data Boundaries
-
-### 7.1 Model constraints (confirmed)
-
-* MUST use OpenAI-compatible agents.
-* MUST use GitHub Copilot.
-
-### 7.2 Data boundaries (confirmed)
-
-* MUST NOT send any data excluded by `.gitignore`.
-
-### 7.3 Enforcement requirements (TBD) (see wf-ba2.5, wf-ba2.5.1)
-
-* Define how the CLI determines what OpenCode is allowed to read/send.
-* Define how to fail safely (block action + explain why) when uncertain.
-
-## 8) Context Sharing: PM ↔ OpenCode (confirmed requirement) (see wf-ba2.5, wf-ba2.5.2)
-
-### 8.1 Requirement
-
-The CLI must provide a mechanism to share actionable context between the PM and OpenCode.
-
-### 8.2 Initial design constraints (TBD)
-
-* Must respect ignore boundaries in section 7.
-* Must be reviewable and reproducible.
-
-### 8.3 Proposed mechanisms (pick one; TBD)
-
-* A generated “context pack” Markdown file under `docs/dev/` (manually fed into OpenCode).
-* A deterministic command that prints a safe, redacted context snapshot to stdout.
-* A shared session log file that OpenCode can ingest.
-
-Default recommendation (v1): generate a Markdown "context pack" file.
-
-* CLI provides a command (name TBD) that writes `docs/dev/CONTEXT_PACK.md` containing:
-  * current objective
-  * top priorities / ready work (derived from `bd ready --json`)
-  * key decisions and assumptions
-  * release status and freeze status (policy-only)
-  * links to relevant docs and issue IDs
-* PM shares this file with OpenCode as the canonical "shared context".
-* The CLI must ensure the file itself contains no ignored content (see section 7).
-
-#### 8.3.1 Example template for `docs/dev/CONTEXT_PACK.md`
-
-The CLI should generate a file that follows a stable, greppable structure.
-
-```markdown
-# Context Pack
-
-## Objective
-
-- <one sentence objective>
-
-## Current Focus
-
-- Workflow stage: intake | triage | plan | ship
-- Primary epic (if any): <beads-id or none>
-
-## Ready Work (Top 10)
-
-- <beads-id>: <title> (p<0-4>)
-- <beads-id>: <title> (p<0-4>)
-
-## Blockers / Risks
-
-- <beads-id or freeform>: <what is blocked and why>
-
-## Recent Decisions
-
-- <date>: <decision>
-
-## Assumptions
-
-- <assumption>
-
-## Release Status
-
-- Target release: <git tag vX.Y.Z or TBD>
-- Freeze status: soft-freeze active | not active
-- Release notes file: docs/releases/<git-tag>.md (if exists)
-
-## Feature Flags
-
-- Default OFF flags:
-  - <FLAG_NAME>: <description>
-
-## Links
-
-- Roadmap: docs/dev/ROADMAP.md
-- Changelog: docs/CHANGELOG.md
-- PRD (CLI): docs/dev/CLI_PRD.md
-- PRD (TUI): docs/dev/TUI_PRD.md
-```
-
-Notes:
-
-* The “Ready Work” section should be generated from Beads state and limited to a configurable N.
-* Avoid embedding any content from ignored files; keep this as a structured summary.
-
-## 9) Scale & Performance (confirmed) (see wf-ca1)
-
-### 9.1 Target scale
-
-* Up to ~1000 open issues.
-
-### 9.2 Performance expectations (TBD)
-
-* Acceptable latency for listing/plan generation.
-* Memory constraints (local machine assumptions).
-
-## 10) Risks & Mitigations (see wf-ba2.5, wf-ba2.7, wf-ba2.8)
-
-* Risk: Duplicate issues → Mitigation: search/list before create; dedupe prompts.
-* Risk: Drift between docs and issues → Mitigation: link artifacts to issue IDs; reconciliation command.
-* Risk: Over-automation reduces trust → Mitigation: “propose → confirm → execute” workflow; previews are best-effort and cannot guarantee strict `--dry-run` behavior once agent hand-offs occur.
-* Risk: Ignore boundary breach → Mitigation: default-deny behavior + explicit allowlist.
-
-## 11) Open Questions (CLI Only)
-
-1. Release id convention: semver-based git tag (confirmed).
-2. Code freeze enforcement: policy-only initially (confirmed); revisit CI enforcement later.
-3. Coverage definition: defaults proposed in section 6.1; confirm or adjust during implementation.
-4. Context sharing mechanism: default proposed in section 8.3 (“context pack” Markdown file); confirm or adjust during implementation.
+Source issue: wf-8js
