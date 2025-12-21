@@ -80,7 +80,7 @@ export async function ensureClient(): Promise<any | undefined> {
   const running = await checkPort(host, port, 300);
 
   try {
-    const mod = await import('opencode');
+    const mod = await import('@opencode-ai/sdk');
     const OpenCode = mod?.OpenCode ?? mod?.default ?? mod;
     const oc = new OpenCode({ host, port });
 

@@ -1,1 +1,1 @@
-declare module 'opencode';
+declare module '@opencode-ai/sdk';

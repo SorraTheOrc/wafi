@@ -14,7 +14,7 @@
   "dependencies": {
     "commander": "^12.1.0",
     "yaml": "^2.8.2",
-    "opencode": "^0.1.0"
+    "@opencode-ai/sdk": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.1",
