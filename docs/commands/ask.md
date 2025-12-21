@@ -6,25 +6,39 @@ Short summary and motivation
 
 ## Usage examples
 
-- Default behavior (uses default agent "Map"):
+- Default behavior (uses default agent "map"):
 
 ```bash
 waif ask "Summarize this file for me"
 ```
 
-- Use a different agent:
+- Use a different agent (defaults also follow `OPENCODE_DEFAULT_AGENT` when set):
 
 ```bash
-waif ask "What should I change?" --agent Patch
+waif ask "What should I change?" --agent plan
 ```
 
-- Emit JSON output (machine-readable):
+- Use first word as agent when mapped in `.opencode/agent_map.yaml` (no `--agent` flag needed):
+
+```bash
+waif ask "Patch draft a short response"
+# Uses agent "Patch" if it exists in agent_map and strips it from the prompt
+```
+
+- Override default provider/model (also read from `.opencode/server.yaml`):
+
+```bash
+OPENCODE_PROVIDER=github-copilot OPENCODE_MODEL=gpt-5-mini \
+  waif ask "Check server"
+```
+
+- Emit JSON output (machine-readable, fields: `agent`, `promptLength`, `responseMarkdown`):
 
 ```bash
 waif ask "Give me a summary" --json
 ```
 
-- Read prompt from stdin (hyphen `-` means read stdin):
+- Read prompt from stdin (hyphen `-` means read stdin, 5s timeout):
 
 ```bash
 echo "Write a short changelog" | waif ask - --agent Scribbler --json
@@ -43,20 +57,26 @@ OPENCODE_ENABLED=0 waif ask "Use fallback behavior"
 OPENCODE_HOST=127.0.0.1 OPENCODE_PORT=9000 OPENCODE_ENABLED=1 waif ask "Check server"
 ```
 
+- Override default agent (CLI and server default):
+
+```bash
+OPENCODE_DEFAULT_AGENT=build waif ask "Say hi"
+```
+
 ## Runtime behavior (what happens when you run `waif ask`)
 
 1. Validate prompt
-   - If the CLI is invoked with `-` as the prompt argument it reads stdin. Otherwise it uses the provided string argument. If no prompt is provided the command exits with a helpful error.
+   - If the CLI is invoked with `-` as the prompt argument it reads stdin (5s timeout). Otherwise it uses the provided string argument. If no prompt is provided the command exits with a helpful error.
 
 2. OpenCode integration check (lazy)
    - The command consults OpenCode configuration (see Configuration reference below) and the runtime enable flag. OpenCode integration is enabled by default; it can be disabled via env var or config.
 
 3. Server reachability
-   - The CLI checks for a running OpenCode server at the configured host/port (from `.opencode/server.yaml` or the env vars `OPENCODE_HOST`/`OPENCODE_PORT`).
+   - The CLI checks for a running OpenCode server at the configured host/port (from `.opencode/server.yaml` or the env vars `OPENCODE_HOST`/`OPENCODE_PORT`). Defaults: host `127.0.0.1`, port `4096`.
    - If a server is reachable the CLI uses it.
 
 4. Start local server (lazy start)
-   - If no server is reachable and OpenCode integration is enabled the CLI attempts to start a local server using the OpenCode SDK's `serve()` function.
+   - If no server is reachable and OpenCode integration is enabled the CLI attempts to start a local server using the OpenCode SDK's `serve()` function. Startup waits up to `OPENCODE_STARTUP_TIMEOUT` (ms, default 5000).
    - The CLI performs a safe startup with reasonable internal timeouts and logs progress to stderr. Expected log lines include:
      - "OpenCode: starting local server..."
      - "OpenCode: server listening at http://<host>:<port>"
@@ -64,10 +84,11 @@ OPENCODE_HOST=127.0.0.1 OPENCODE_PORT=9000 OPENCODE_ENABLED=1 waif ask "Check se
    - The CLI waits a short, bounded time for the server to become responsive before proceeding. If the server does not become ready within that window the CLI logs a non-fatal warning and proceeds to fallback behavior.
 
 5. Use the server (if available)
-   - When a client is available the CLI calls the server via the SDK, mapping the provided agent name to the internal agent ID and issuing the ask request. The CLI prints the returned Markdown (or JSON wrapper if `--json` was passed).
+   - When a client is available the CLI calls the server via the SDK, mapping the provided agent name to the internal agent ID and issuing the ask request. The CLI prints the returned Markdown (or JSON wrapper if `--json` was passed). The request uses provider/model defaults (`github-copilot` / `gpt-5-mini`) unless overridden.
 
-6. Fallback behavior
+6. Fallback behavior / errors
    - If the OpenCode SDK cannot be imported, the server cannot be started, or the ask call fails, the CLI falls back to a safe, non-fatal placeholder response (a simple Markdown echo with the agent name). Failures are logged as warnings to stderr, not as hard errors, so simple scripting workflows continue to work.
+   - If the server returns an error message, the CLI prints `OpenCode error: ...` and sets a non-zero exit code while still emitting output.
 
 ## Configuration reference
 
@@ -76,35 +97,42 @@ OPENCODE_HOST=127.0.0.1 OPENCODE_PORT=9000 OPENCODE_ENABLED=1 waif ask "Check se
 
 ```yaml
 server:
-  host: "localhost"
-  port: 8080
+  host: "127.0.0.1"
+  port: 4096
   enable: true
+  defaultAgent: "map"
+  provider: "github-copilot"
+  model: "gpt-5-mini"
   description: "Local OpenCode server config for development. Enable/disable via OPENCODE_ENABLED env var or edit this file."
 ```
 
   - Notes:
     - `enable`: When true the CLI will attempt to connect to or start a local OpenCode server. The implementation treats OpenCode integration as enabled by default unless explicitly disabled via env vars or config.
     - `host`/`port`: network address used to check/connect to a running server and to start one if required.
+    - `defaultAgent`, `provider`, `model`: defaults used when sending prompts; all can be overridden via env vars or CLI flags.
 
 - Environment variable overrides
   - `OPENCODE_HOST` — host to check/start the server on (overrides `.opencode/server.yaml.server.host`)
   - `OPENCODE_PORT` — port used for server connectivity (overrides `.opencode/server.yaml.server.port`)
   - `OPENCODE_ENABLED` — when set to a truthy value (1/true) enables OpenCode integration; when set to an explicit falsy value (0/false) disables it. When unset OpenCode integration is enabled by default.
+  - `OPENCODE_DEFAULT_AGENT` — override default agent name
+  - `OPENCODE_PROVIDER` / `OPENCODE_MODEL` — override default provider/model
+  - `OPENCODE_STARTUP_TIMEOUT` — ms to wait when lazily starting the server (default 5000)
 
 - Agent name → agent-id mapping
-  - Purpose: the CLI (and the OpenCode client) accepts logical agent names like "Map", "Patch", "Scribbler" and maps them to the concrete agent IDs the OpenCode server understands.
+  - Purpose: the CLI (and the OpenCode client) accepts logical agent names like "map", "patch", "scribbler" and maps them to the concrete agent IDs the OpenCode server understands.
   - Recommended location/scheme:
     - File: `.opencode/agent_map.yaml`
     - Schema (YAML mapping string→string):
 
 ```yaml
-Map: map-agent-id
-Patch: patch-agent-id
-Scribbler: scribbler-agent-id
+map: map
+patch: patch
+scribbler: scribbler
 ```
 
-  - How to add a mapping:
-    - Add a new key/value to `.opencode/agent_map.yaml`: `<FriendlyName>: <OpenCodeAgentID>`
+  - How to add a mapping / how it’s populated:
+    - The CLI will attempt to list agents from the server and auto-write `.opencode/agent_map.yaml`; you can also add entries manually.
     - The `waif ask` CLI reads the mapping at invocation time.
 
 ## Testing and E2E guide
@@ -209,6 +237,7 @@ npm test -- -t "ask.e2e"
 - Ask responses failing (SDK `ask` call throws)
   - Check server logs for the OpenCode server (stdout/stderr from `npx opencode serve`).
   - Ensure agent ID mappings exist in `.opencode/agent_map.yaml` and the server recognizes the agent id used.
+  - If the CLI prints `OpenCode error: ...`, it also exits non-zero while still emitting output. Ensure the configured provider/model (e.g., `github-copilot` / `gpt-5-mini`) is reachable.
 
 ## Acceptance criteria (short checklist for docs author / reviewer)
 

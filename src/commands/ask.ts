@@ -32,11 +32,12 @@ export function createAskCommand() {
   cmd
     .description('One-shot agent ask command')
     .argument('[prompt...]', 'Prompt text, or - to read stdin (variadic)')
-    .option('--agent <name>', 'Agent name to use (default: Map)')
+    .option('--agent <name>', 'Agent name to use (default: map)')
     .option('--json', 'Emit JSON output')
     .action(async (promptArg: string | string[] | undefined, options: any, command: Command) => {
       const jsonOutput = Boolean(options.json ?? command.parent?.getOptionValue('json'));
-      const agent = options.agent || 'Map';
+      const map = loadAgentMap();
+      let agent = options.agent || process.env.OPENCODE_DEFAULT_AGENT || 'map';
 
       let promptText: string | undefined;
       if (Array.isArray(promptArg)) {
@@ -55,19 +56,34 @@ export function createAskCommand() {
         throw new CliError('Missing prompt. Provide as argument or use - to read stdin', 2);
       }
 
+      const promptWords = promptText.trim().split(/\s+/);
+      const firstWord = promptWords[0];
+      if (!options.agent && firstWord && map[firstWord]) {
+        agent = firstWord;
+        promptWords.shift();
+        promptText = promptWords.join(' ').trim();
+        if (!promptText) {
+          throw new CliError('Missing prompt after removing agent name', 2);
+        }
+      }
+
+      const mappedAgent = map[agent] || agent;
+
       // If OpenCode integration is enabled and available, ensure client and use it.
       if (isEnabled()) {
         const client = await ensureClient();
         if (client && typeof client.ask === 'function') {
-          const map = loadAgentMap();
-          const mappedAgent = map[agent] || agent;
           try {
             const res = await client.ask(mappedAgent, promptText);
             const md = res?.markdown ?? String(res);
+            const prefixed = `${mappedAgent} answers:\n${md}`;
             if (jsonOutput) {
-              emitJson({ agent: mappedAgent, promptLength: promptText.length, responseMarkdown: md });
+              emitJson({ agent: mappedAgent, promptLength: promptText.length, responseMarkdown: prefixed });
             } else {
-              logStdout(md);
+              logStdout(prefixed);
+            }
+            if (/OpenCode error:/i.test(md)) {
+              process.exitCode = 1;
             }
             return;
           } catch (e) {
@@ -80,12 +96,13 @@ export function createAskCommand() {
       }
 
       // Fallback placeholder implementation for MVP: echo back a Markdown formatted response.
-      const md = `# Response from ${agent}\n\n${promptText}\n`;
+      const md = `# Response from ${mappedAgent}\n\n${promptText}\n`;
+      const prefixed = `${mappedAgent} answers:\n${md}`;
 
       if (jsonOutput) {
-        emitJson({ agent, promptLength: promptText.length, responseMarkdown: md });
+        emitJson({ agent: mappedAgent, promptLength: promptText.length, responseMarkdown: prefixed });
       } else {
-        logStdout(md);
+        logStdout(prefixed);
       }
     });
 
