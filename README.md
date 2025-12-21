@@ -96,6 +96,7 @@ direnv allow .
 - Scheduling: this repo uses **beads-viewer** (`bv`) to schedule and prioritize work using dependency graph insights. See [Dicklesworthstone/beads_viewer](https://github.com/Dicklesworthstone/beads_viewer)
 - Docs: user documentation lives in [`docs`](docs)
 - Docs: developer-focused documentation lives in [`docs/dev`](docs/dev)
+- Idle scheduler module: [`docs/dev/idle_scheduler_module.md`](docs/dev/idle_scheduler_module.md) documents the drop-in Bash scheduler shipped in [`scripts/idle-scheduler.sh`](scripts/idle-scheduler.sh).
 - Agent CLI: recommended tool is **OpenCode** for agent-driven workflows. See [opencode-ai/opencode](https://github.com/opencode-ai/opencode)
 
 ## Testing

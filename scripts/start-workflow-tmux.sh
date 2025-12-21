@@ -167,12 +167,16 @@ pane_bootstrap() {
     fi
     local wt_dir
     wt_dir="$(worktree_dir_path "$actor_name")"
-    # Export BEADS_NO_DAEMON and BD_ACTOR, cd into worktree, run waif startWork.
-    tmux send-keys -t "$pane_id" "cd \"$wt_dir\"; export BEADS_NO_DAEMON=1; export BD_ACTOR=\"$actor_name\"; clear; waif startWork \"$actor_name\"" C-m
+    local extra_cmd=""
+    if [[ "$actor_name" == "pm" ]]; then
+      extra_cmd='function idle_task(){ clear; waif in-progress; }; source "$repo_root/scripts/idle-scheduler.sh"'
+    fi
+    tmux send-keys -t "$pane_id" "cd \"$wt_dir\"; export BEADS_NO_DAEMON=1; export BD_ACTOR=\"$actor_name\"; clear; $extra_cmd; waif startWork \"$actor_name\"" C-m
   else
     tmux send-keys -t "$pane_id" "cd \"$repo_root\"; clear; echo \"[User] Shell ready in repo root.\"" C-m
   fi
 }
+
 
 create_layout_in_window() {
   local target_window="$1" # e.g. session:window
