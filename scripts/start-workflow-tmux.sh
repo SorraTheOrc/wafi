@@ -559,7 +559,7 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
   read -r -n1 choice
   echo "" >&2
   case "${choice,,}" in
-    o|"")
+    o|""|$'\n')
       echo "Opening existing tmux session: $SESSION" >&2
       tmux attach -t "$SESSION"
       exit 0
