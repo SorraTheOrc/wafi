@@ -357,7 +357,7 @@ pane_bootstrap_from_config() {
     # Escape the idle_task for embedding in the function definition
     local escaped_task
     escaped_task=$(printf '%q' "$idle_task")
-    idle_cmd="function idle_task(){ eval $escaped_task; }; source \"$repo_root/scripts/idle-scheduler.sh\" $idle_freq $idle_var"
+    idle_cmd="stty -echo 2>/dev/null; function idle_task(){ eval $escaped_task; }; source \"$repo_root/scripts/idle-scheduler.sh\" $idle_freq $idle_var; stty echo 2>/dev/null; clear"
     
     # Send idle setup after a brief delay to let the new shell start
     (sleep 1; tmux send-keys -t "$pane_id" "$idle_cmd" C-m) &
@@ -541,49 +541,48 @@ if [[ "$RESTART" -eq 1 ]]; then
   tmux kill-server >/dev/null 2>&1 || true
 fi
 
-if tmux has-session -t "$SESSION" 2>/dev/null; then
-  echo "Found existing tmux session: $SESSION" >&2
+should_create=0
 
-  # If we're running in an interactive terminal, ask the user what to do.
-  if [[ -t 0 ]]; then
-    while true; do
-      read -r -p "Session '$SESSION' exists. (o)pen / (r)ecreate / (c)ancel? [o]: " choice
-      choice=${choice:-o}
-      case "$choice" in
-        o|O|open)
-          echo "Opening existing session: $SESSION" >&2
-          tmux attach -t "$SESSION"
-          exit 0
-          ;;
-        r|R|recreate)
-          echo "Recreating session: $SESSION (killing existing)..." >&2
-          tmux kill-session -t "$SESSION" 2>/dev/null || true
-          echo "Creating new tmux session: $SESSION" >&2
-          tmux new-session -d -s "$SESSION" -n "temp" -c "$repo_root" || {
-            echo "Error: Failed to create tmux session" >&2
-            exit 1
-          }
-          create_all_windows "$SESSION"
-          # Remove the temp window if it still exists
-          tmux kill-window -t "${SESSION}:temp" 2>/dev/null || true
-          break
-          ;;
-        c|C|cancel)
-          echo "Cancelled." >&2
-          exit 0
-          ;;
-        *)
-          echo "Please enter o, r, or c." >&2
-          ;;
-      esac
-    done
-  else
-    # Non-interactive: default to opening existing session to avoid destructive behavior
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+  if [[ ! -t 0 ]]; then
     echo "Non-interactive shell: opening existing session: $SESSION" >&2
     tmux attach -t "$SESSION"
     exit 0
   fi
+
+  echo "tmux session '$SESSION' already exists." >&2
+  echo "Choose an option:" >&2
+  echo "  [o] Open existing session" >&2
+  echo "  [r] Reset session (kill and recreate)" >&2
+  echo "  [c] Cancel" >&2
+  printf "> " >&2
+  read -r -n1 choice
+  echo "" >&2
+  case "${choice,,}" in
+    o|"")
+      echo "Opening existing tmux session: $SESSION" >&2
+      tmux attach -t "$SESSION"
+      exit 0
+      ;;
+    r)
+      echo "Resetting tmux session: $SESSION" >&2
+      tmux kill-session -t "$SESSION" >/dev/null 2>&1 || true
+      should_create=1
+      ;;
+    c)
+      echo "Canceled by user." >&2
+      exit 0
+      ;;
+    *)
+      echo "Unrecognized selection. Canceling." >&2
+      exit 1
+      ;;
+  esac
 else
+  should_create=1
+fi
+
+if (( should_create == 1 )); then
   echo "Creating new tmux session: $SESSION" >&2
   tmux new-session -d -s "$SESSION" -n "temp" -c "$repo_root" || {
     echo "Error: Failed to create tmux session" >&2
