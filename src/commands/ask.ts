@@ -31,15 +31,21 @@ export function createAskCommand() {
   const cmd = new Command('ask');
   cmd
     .description('One-shot agent ask command')
-    .argument('[prompt]', 'Prompt text, or - to read stdin')
+    .argument('[prompt...]', 'Prompt text, or - to read stdin (variadic)')
     .option('--agent <name>', 'Agent name to use (default: Map)')
     .option('--json', 'Emit JSON output')
-    .action(async (promptArg: string | undefined, options: any, command: Command) => {
+    .action(async (promptArg: string | string[] | undefined, options: any, command: Command) => {
       const jsonOutput = Boolean(options.json ?? command.parent?.getOptionValue('json'));
       const agent = options.agent || 'Map';
 
       let promptText: string | undefined;
-      if (promptArg === '-') {
+      if (Array.isArray(promptArg)) {
+        if (promptArg.length === 1 && promptArg[0] === '-') {
+          promptText = await readStdin();
+        } else {
+          promptText = promptArg.join(' ').trim();
+        }
+      } else if (promptArg === '-') {
         promptText = await readStdin();
       } else if (typeof promptArg === 'string') {
         promptText = promptArg;
