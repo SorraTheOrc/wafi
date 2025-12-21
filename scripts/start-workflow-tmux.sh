@@ -10,7 +10,7 @@ declare -a WARNINGS=()
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/start-workflow-tmux.sh [--restart] [--session <name>]
+  scripts/start-workflow-tmux.sh [--restart] [--session <name>] [--force]
 
 Starts (or reuses) a tmux session and creates windows/panes for workflow agents
 (described in docs/Workflow.md) plus a user pane.
@@ -18,6 +18,7 @@ Starts (or reuses) a tmux session and creates windows/panes for workflow agents
 Options:
   --restart         kill tmux server first (outside tmux only)
   --session <name>  tmux session name (default: waif-workflow)
+  --force           force worktree deletion even with uncommitted changes
   -h, --help        show this help
 
 Environment:
@@ -25,7 +26,7 @@ Environment:
 
 Notes:
   - If already inside tmux, this creates new windows in the current session.
-  - If the target session already exists, it will be reused.
+  - If the target session already exists, you will be prompted with reset options.
   - Agent panes are configured via config/workflow_agents.yaml.
   - Agents are grouped into windows by their 'window' field (default: core).
 EOF
@@ -33,6 +34,7 @@ EOF
 
 SESSION="waif-workflow"
 RESTART=0
+FORCE=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -43,6 +45,10 @@ while [[ $# -gt 0 ]]; do
     --session)
       SESSION="${2:-}"
       shift 2
+      ;;
+    --force)
+      FORCE=1
+      shift
       ;;
     -h|--help)
       usage
@@ -273,6 +279,110 @@ ensure_worktree() {
   fi
   
   return 0
+}
+
+# Check if a worktree has uncommitted changes (staged, unstaged, or untracked)
+# Returns 0 if clean, 1 if dirty
+# Sets WORKTREE_STATUS to human-readable status
+check_worktree_clean() {
+  local worktree_path="$1"
+  WORKTREE_STATUS=""
+  WORKTREE_DETAIL=""
+  
+  if [[ ! -d "$worktree_path" ]]; then
+    return 0  # Non-existent is considered clean
+  fi
+  
+  local status_output
+  status_output=$(git -C "$worktree_path" status --porcelain 2>/dev/null) || return 0
+  
+  if [[ -z "$status_output" ]]; then
+    return 0  # Clean
+  fi
+  
+  # Parse status to provide meaningful message
+  local staged=0 modified=0 untracked=0
+  while IFS= read -r line; do
+    local index_status="${line:0:1}"
+    local worktree_status="${line:1:1}"
+    
+    if [[ "$index_status" != " " && "$index_status" != "?" ]]; then
+      ((staged++))
+    fi
+    if [[ "$worktree_status" == "M" || "$worktree_status" == "D" ]]; then
+      ((modified++))
+    fi
+    if [[ "$index_status" == "?" ]]; then
+      ((untracked++))
+    fi
+  done <<< "$status_output"
+  
+  local parts=()
+  [[ "$staged" -gt 0 ]] && parts+=("$staged staged")
+  [[ "$modified" -gt 0 ]] && parts+=("$modified modified")
+  [[ "$untracked" -gt 0 ]] && parts+=("$untracked untracked")
+  
+  WORKTREE_STATUS=$(IFS=", "; echo "${parts[*]}")
+  WORKTREE_DETAIL="$status_output"
+  return 1  # Dirty
+}
+
+# Get list of all workflow worktrees (worktree_* directories)
+get_workflow_worktrees() {
+  git -C "$repo_root" worktree list --porcelain | awk '$1=="worktree"{print $2}' | while read -r wt_path; do
+    local base
+    base=$(basename "$wt_path")
+    if [[ "$base" == worktree_* ]]; then
+      echo "$wt_path"
+    fi
+  done
+}
+
+# Check all worktrees for uncommitted changes
+# Returns 0 if all clean, 1 if any dirty
+# Sets DIRTY_WORKTREES array with paths, status, and detail
+declare -a DIRTY_WORKTREES=()
+check_all_worktrees_clean() {
+  DIRTY_WORKTREES=()
+  local all_clean=0
+  
+  while read -r wt_path; do
+    [[ -z "$wt_path" ]] && continue
+    echo "  Checking $(basename "$wt_path")..." >&2
+    if ! check_worktree_clean "$wt_path"; then
+      DIRTY_WORKTREES+=("$wt_path|$WORKTREE_STATUS|$WORKTREE_DETAIL")
+      all_clean=1
+    fi
+  done < <(get_workflow_worktrees)
+  
+  return $all_clean
+}
+
+# Delete all workflow worktrees
+delete_all_worktrees() {
+  local force_flag="${1:-0}"
+  
+  echo "Removing workflow worktrees..." >&2
+  
+  while read -r wt_path; do
+    [[ -z "$wt_path" ]] && continue
+    local wt_name
+    wt_name=$(basename "$wt_path")
+    echo "  Removing $wt_name..." >&2
+    
+    if [[ "$force_flag" -eq 1 ]]; then
+      if ! git -C "$repo_root" worktree remove --force "$wt_path" 2>&1; then
+        echo "    Warning: Failed to remove $wt_name" >&2
+      fi
+    else
+      if ! git -C "$repo_root" worktree remove "$wt_path" 2>&1; then
+        echo "    Warning: Failed to remove $wt_name" >&2
+      fi
+    fi
+  done < <(get_workflow_worktrees)
+  
+  echo "Pruning worktree references..." >&2
+  git -C "$repo_root" worktree prune 2>/dev/null || true
 }
 
 # --- Pane bootstrap ---
@@ -550,6 +660,109 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
     exit 0
   fi
 
+  echo "" >&2
+  echo "Session '$SESSION' already exists." >&2
+  echo "" >&2
+  echo "Select an option:" >&2
+  echo "  1) Attach to existing session" >&2
+  echo "  2) Kill session and recreate, preserving git worktrees" >&2
+  echo "  3) Full reset, including git worktrees" >&2
+  echo "  4) Cancel" >&2
+  echo "" >&2
+  
+  read -rp "Enter choice [1-4]: " choice
+  
+  case "$choice" in
+    1)
+      echo "Attaching to existing session..." >&2
+      tmux attach -t "$SESSION"
+      exit 0
+      ;;
+    2)
+      echo "" >&2
+      echo "Resetting TMux session..." >&2
+      echo "  Killing session '$SESSION'..." >&2
+      tmux kill-session -t "$SESSION" 2>/dev/null || true
+      echo "  Session killed." >&2
+      should_create=1
+      ;;
+    3)
+      echo "" >&2
+      echo "Checking worktrees for uncommitted changes..." >&2
+      
+      if check_all_worktrees_clean; then
+        echo "  All worktrees are clean." >&2
+      else
+        if [[ "$FORCE" -eq 1 ]]; then
+          echo "" >&2
+          echo "Warning: The following worktrees have uncommitted changes:" >&2
+          for dirty in "${DIRTY_WORKTREES[@]}"; do
+            IFS='|' read -r wt_path wt_status wt_detail <<< "$dirty"
+            echo "    - $wt_path: $wt_status" >&2
+            if [[ -n "$wt_detail" ]]; then
+              echo "      Changes:" >&2
+              while IFS= read -r line; do
+                echo "        $line" >&2
+              done <<< "$wt_detail"
+            fi
+          done
+          echo "" >&2
+          echo "Proceeding with --force flag..." >&2
+        else
+          echo "" >&2
+          echo "Error: The following worktrees have uncommitted changes:" >&2
+          for dirty in "${DIRTY_WORKTREES[@]}"; do
+            IFS='|' read -r wt_path wt_status wt_detail <<< "$dirty"
+            echo "    - $wt_path: $wt_status" >&2
+            if [[ -n "$wt_detail" ]]; then
+              echo "      Changes:" >&2
+              while IFS= read -r line; do
+                echo "        $line" >&2
+              done <<< "$wt_detail"
+            fi
+          done
+          echo "" >&2
+          echo "Aborting to preserve uncommitted work." >&2
+          echo "Use --force to delete worktrees anyway." >&2
+          exit 1
+        fi
+      fi
+      
+      echo "" >&2
+      echo "Performing full reset..." >&2
+      
+      delete_all_worktrees "$FORCE"
+      echo "Killing TMux session '$SESSION'..." >&2
+      tmux kill-session -t "$SESSION" 2>/dev/null || true
+      echo "  Session killed." >&2
+      should_create=1
+      ;;
+    4|"")
+      echo "Cancelled." >&2
+      exit 0
+      ;;
+    *)
+      echo "Invalid choice. Cancelled." >&2
+      exit 1
+      ;;
+  esac
+  
+  echo "" >&2
+  echo "Recreating session..." >&2
+else
+  should_create=1
+fi
+
+if (( should_create == 1 )); then
+  echo "Creating new tmux session: $SESSION" >&2
+  tmux new-session -d -s "$SESSION" -n "temp" -c "$repo_root" || {
+    echo "Error: Failed to create tmux session" >&2
+    exit 1
+  }
+  create_all_windows "$SESSION"
+  tmux kill-window -t "${SESSION}:temp" 2>/dev/null || true
+fi
+
   echo "tmux session '$SESSION' already exists." >&2
   echo "Choose an option:" >&2
   echo "  [o] Open existing session" >&2
@@ -583,6 +796,103 @@ else
 fi
 
 if (( should_create == 1 )); then
+=======
+  echo "" >&2
+  echo "Session '$SESSION' already exists." >&2
+  echo "" >&2
+  echo "Select an option:" >&2
+  echo "  1) Attach to existing session" >&2
+  echo "  2) Kill session and recreate, preserving git worktrees" >&2
+  echo "  3) Full reset, including git worktrees" >&2
+  echo "  4) Cancel" >&2
+  echo "" >&2
+  
+  read -rp "Enter choice [1-4]: " choice
+  
+  case "$choice" in
+    1)
+      echo "Attaching to existing session..." >&2
+      # Just attach, skip recreation
+      tmux attach -t "$SESSION"
+      exit 0
+      ;;
+    2)
+      echo "" >&2
+      echo "Resetting TMux session..." >&2
+      echo "  Killing session '$SESSION'..." >&2
+      tmux kill-session -t "$SESSION" 2>/dev/null || true
+      echo "  Session killed." >&2
+      ;;
+    3)
+      echo "" >&2
+      echo "Checking worktrees for uncommitted changes..." >&2
+      
+      if check_all_worktrees_clean; then
+        echo "  All worktrees are clean." >&2
+      else
+        if [[ "$FORCE" -eq 1 ]]; then
+          echo "" >&2
+          echo "Warning: The following worktrees have uncommitted changes:" >&2
+          for dirty in "${DIRTY_WORKTREES[@]}"; do
+            IFS='|' read -r wt_path wt_status wt_detail <<< "$dirty"
+            echo "    - $wt_path: $wt_status" >&2
+            if [[ -n "$wt_detail" ]]; then
+              echo "      Changes:" >&2
+              # Indent each line of detail
+              while IFS= read -r line; do
+                echo "        $line" >&2
+              done <<< "$wt_detail"
+            fi
+          done
+          echo "" >&2
+          echo "Proceeding with --force flag..." >&2
+        else
+          echo "" >&2
+          echo "Error: The following worktrees have uncommitted changes:" >&2
+          for dirty in "${DIRTY_WORKTREES[@]}"; do
+            IFS='|' read -r wt_path wt_status wt_detail <<< "$dirty"
+            echo "    - $wt_path: $wt_status" >&2
+            if [[ -n "$wt_detail" ]]; then
+              echo "      Changes:" >&2
+              while IFS= read -r line; do
+                echo "        $line" >&2
+              done <<< "$wt_detail"
+            fi
+          done
+          echo "" >&2
+          echo "Aborting to preserve uncommitted work." >&2
+          echo "Use --force to delete worktrees anyway." >&2
+          exit 1
+        fi
+      fi
+      
+      echo "" >&2
+      echo "Performing full reset..." >&2
+      
+      # Delete worktrees
+      delete_all_worktrees "$FORCE"
+      
+      # Kill tmux session
+      echo "Killing TMux session '$SESSION'..." >&2
+      tmux kill-session -t "$SESSION" 2>/dev/null || true
+      echo "  Session killed." >&2
+      ;;
+    4|"")
+      echo "Cancelled." >&2
+      exit 0
+      ;;
+    *)
+      echo "Invalid choice. Cancelled." >&2
+      exit 1
+      ;;
+  esac
+  
+  echo "" >&2
+  echo "Recreating session..." >&2
+fi
+
+if ! tmux has-session -t "$SESSION" 2>/dev/null; then
+>>>>>>> 31260f6 (Improve tmux workflow reset safety)
   echo "Creating new tmux session: $SESSION" >&2
   tmux new-session -d -s "$SESSION" -n "temp" -c "$repo_root" || {
     echo "Error: Failed to create tmux session" >&2
