@@ -158,23 +158,29 @@ pane_bootstrap() {
     pane_title "$pane_id" "$label"
   fi
 
-  if [[ -n "$agent_role" ]]; then
-    # Use actor name equal to role for simple mapping; ensure worktree exists and start waif in it.
-    local actor_name="$agent_role"
-    if ! ensure_worktree "$actor_name"; then
-      tmux send-keys -t "$pane_id" "cd \"$repo_root\"; clear; echo \"[$label] Failed to create/reuse worktree for $actor_name\"" C-m
-      return 0
+    if [[ -n "$agent_role" ]]; then
+      # Use actor name equal to role for simple mapping; ensure worktree exists and start waif in it.
+      local actor_name="$agent_role"
+      if ! ensure_worktree "$actor_name"; then
+        tmux send-keys -t "$pane_id" "cd \"$repo_root\"; clear; echo \"[$label] Failed to create/reuse worktree for $actor_name\"" C-m
+        return 0
+      fi
+      local wt_dir
+      wt_dir="$(worktree_dir_path "$actor_name")"
+      local extra_cmd=""
+      if [[ "$actor_name" == "pm" ]]; then
+        extra_cmd="function idle_task(){ clear; waif in-progress; }; source \"${repo_root}/scripts/idle-scheduler.sh\""
+      fi
+      local pane_cmd="cd \"$wt_dir\"; export BEADS_NO_DAEMON=1; export BD_ACTOR=\"$actor_name\"; clear"
+      if [[ -n "$extra_cmd" ]]; then
+        pane_cmd+="; $extra_cmd"
+      fi
+      pane_cmd+="; waif startWork \"$actor_name\""
+      tmux send-keys -t "$pane_id" "$pane_cmd" C-m
+    else
+      tmux send-keys -t "$pane_id" "cd \"$repo_root\"; clear; echo \"[User] Shell ready in repo root.\"" C-m
     fi
-    local wt_dir
-    wt_dir="$(worktree_dir_path "$actor_name")"
-    local extra_cmd=""
-    if [[ "$actor_name" == "pm" ]]; then
-      extra_cmd='function idle_task(){ clear; waif in-progress; }; source "$repo_root/scripts/idle-scheduler.sh"'
-    fi
-    tmux send-keys -t "$pane_id" "cd \"$wt_dir\"; export BEADS_NO_DAEMON=1; export BD_ACTOR=\"$actor_name\"; clear; $extra_cmd; waif startWork \"$actor_name\"" C-m
-  else
-    tmux send-keys -t "$pane_id" "cd \"$repo_root\"; clear; echo \"[User] Shell ready in repo root.\"" C-m
-  fi
+
 }
 
 
