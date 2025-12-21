@@ -103,19 +103,21 @@ parse_agents_json() {
   local json="$1"
   
   # Use Node.js to parse JSON and output shell-friendly format
+  # Note: Empty fields use a placeholder to prevent bash IFS from collapsing consecutive tabs
   local parsed
   parsed=$(node -e "
 const data = JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf-8'));
+const EMPTY = '__EMPTY__';  // Placeholder for empty fields
 for (const agent of data) {
   const name = agent.name;
   const label = agent.label;
-  const role = agent.role || '';
+  const role = agent.role || EMPTY;
   const window = agent.window || 'core';
   const worktree = agent.worktree ? '1' : '0';
   const is_user = agent.is_user ? '1' : '0';
   
   const idle = agent.idle || {};
-  const idle_task = idle.task || '';
+  const idle_task = idle.task || EMPTY;
   const idle_freq = String(idle.frequency || 30);
   const idle_var = String(idle.variance || 10);
   
@@ -125,7 +127,7 @@ for (const agent of data) {
     const quoted = String(v).replace(/'/g, \"'\\\\''\");
     return k + \"='\" + quoted + \"'\";
   });
-  const env_str = envPairs.join(' ');
+  const env_str = envPairs.join(' ') || EMPTY;
   
   // Output tab-separated fields
   console.log([name, label, role, window, worktree, is_user, idle_task, idle_freq, idle_var, env_str].join('\t'));
@@ -133,6 +135,11 @@ for (const agent of data) {
 " <<< "$json")
   
   while IFS=$'\t' read -r name label role window worktree is_user idle_task idle_freq idle_var env_str; do
+    # Convert placeholders back to empty strings
+    [[ "$role" == "__EMPTY__" ]] && role=""
+    [[ "$idle_task" == "__EMPTY__" ]] && idle_task=""
+    [[ "$env_str" == "__EMPTY__" ]] && env_str=""
+    
     AGENT_NAMES+=("$name")
     AGENT_LABELS+=("$label")
     AGENT_ROLES+=("$role")
@@ -229,10 +236,11 @@ ensure_worktree() {
     return 1
   fi
 
+  # Redirect worktree creation output to stderr to avoid polluting script flow
   if git -C "$repo_root" show-ref --verify --quiet "refs/heads/$branch"; then
-    git -C "$repo_root" worktree add "$target_dir" "$branch"
+    git -C "$repo_root" worktree add "$target_dir" "$branch" >&2
   else
-    git -C "$repo_root" worktree add -b "$branch" "$target_dir"
+    git -C "$repo_root" worktree add -b "$branch" "$target_dir" >&2
   fi
 }
 
