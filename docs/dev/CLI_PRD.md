@@ -26,7 +26,7 @@ Product work fragments across docs, chat, and code. The goal is a single, audita
 
 ### 1.4 Non-goals
 
-* Building a TUI in this PRD (covered separately in docs/dev/TUI_PRD.md).
+* Building a TUI in this PRD (covered separately in docs/dev/TUI\_PRD.md).
 * Replacing Beads with another tracker, or maintaining a duplicate issue database.
 * Fully automated releases in v1 (manual first; automation later).
 
@@ -128,8 +128,9 @@ These utilities are part of the CLI surface and should be callable from CI and f
 
 *snip unchanged content above for brevity*
 
-
 ## 12) Intake: Responsive Console Table Output
+
+> Related PRD: `docs/dev/PRD-command-in-progress.md` (tracks detailed `waif in-progress` output requirements, including inline blocker sub-tables).
 
 ### Problem
 
@@ -143,40 +144,40 @@ Secondary: TUI operators, automation scripts, CI jobs, SRE/QA who rely on readab
 
 ### Success criteria
 
-- No wrapped cells in table outputs.
-- When the terminal width is insufficient, the renderer drops rightmost, less-important columns until the table fits on a single line per record.
-- The title column must always be present; when it does not fit, it is truncated with an ellipsis rather than dropped.
-- Measurable targets: single-line rows at 80 columns; in narrower panes (e.g., 40 cols) table fits by dropping columns while preserving truncated title.
+* No wrapped cells in table outputs.
+* When the terminal width is insufficient, the renderer drops rightmost, less-important columns until the table fits on a single line per record.
+* The title column must always be present; when it does not fit, it is truncated with an ellipsis rather than dropped.
+* Measurable targets: single-line rows at 80 columns; in narrower panes (e.g., 40 cols) table fits by dropping columns while preserving truncated title.
 
 ### Constraints
 
-- Must not introduce wrapped cells.
-- Title column must never be dropped; when space is insufficient it should be truncated with an ellipsis.
-- Preserve ANSI color behavior; ensure color sequences do not contribute to visible width calculations when possible (or accept caveat).
-- Minimize breaking changes for downstream automation that may parse output; if necessary, provide a machine-readable `--json` output or an explicit opt-out flag (e.g., `--no-responsive`).
+* Must not introduce wrapped cells.
+* Title column must never be dropped; when space is insufficient it should be truncated with an ellipsis.
+* Preserve ANSI color behavior; ensure color sequences do not contribute to visible width calculations when possible (or accept caveat).
+* Minimize breaking changes for downstream automation that may parse output; if necessary, provide a machine-readable `--json` output or an explicit opt-out flag (e.g., `--no-responsive`).
 
 ### Existing state
 
-- The codebase currently uses `src/lib/table.ts` to render tables, with fixed-column width computation and a static title cap. Commands such as `src/commands/next.ts` call into this renderer.
+* The codebase currently uses `src/lib/table.ts` to render tables, with fixed-column width computation and a static title cap. Commands such as `src/commands/next.ts` call into this renderer.
 
 ### Desired change
 
-- Implement a responsive table renderer that:
-  - Detects terminal width.
-  - Drops rightmost non-mandatory columns by priority until the table fits.
-  - Always retains the `id` and `title` columns; truncates `title` with ellipses when necessary.
-  - Provides a `--no-responsive` or `--compact` flag if consumers need deterministic old behavior.
+* Implement a responsive table renderer that:
+  * Detects terminal width.
+  * Drops rightmost non-mandatory columns by priority until the table fits.
+  * Always retains the `id` and `title` columns; truncates `title` with ellipses when necessary.
+  * Provides a `--no-responsive` or `--compact` flag if consumers need deterministic old behavior.
 
 ### Likely duplicates / related docs
 
-- docs/dev/TUI_PRD.md
-- docs/Workflow.md
+* docs/dev/TUI\_PRD.md
+* docs/Workflow.md
 
 ### Related issues
 
-- wf-soh: Integrate marked-terminal markdown rendering for all CLI output
-- wf-35m.3: Extract shared table rendering and align blockers logic
-- wf-35m.1: Refactor bd/bv CLI invocation into shared utility
+* wf-soh: Integrate marked-terminal markdown rendering for all CLI output
+* wf-35m.3: Extract shared table rendering and align blockers logic
+* wf-35m.1: Refactor bd/bv CLI invocation into shared utility
 
 ### Clarifying questions
 
@@ -188,9 +189,11 @@ Secondary: TUI operators, automation scripts, CI jobs, SRE/QA who rely on readab
 
 ### Proposed next step
 
-- UPDATE PRD at: docs/dev/CLI_PRD.md
+* UPDATE PRD at: docs/dev/CLI\_PRD.md
 
 Source issue: wf-8js
+
+(See also: `docs/dev/PRD-command-in-progress.md`, source issue: wf-10f.)
 
 ## 13) Ask command: open opencode TUI with injected prompt
 
@@ -206,32 +209,32 @@ Secondary: Observers working in agent panes who need context on injected prompts
 
 ### Success criteria
 
-- Running `ask <prompt>` opens the target agent’s OpenCode TUI in its tmux pane (per config mapping), injects the prompt, and leaves focus in the invoking pane.
-- Prompt, target agent, and timestamp are logged in an AI-readable format to `~/.waif/logs/ask.log` with size-based rotation (5 MB max, keep 5 files).
-- If pane resolution or tmux injection fails, `ask` surfaces an inline error and exits non-zero.
+* Running `ask <prompt>` opens the target agent’s OpenCode TUI in its tmux pane (per config mapping), injects the prompt, and leaves focus in the invoking pane.
+* Prompt, target agent, and timestamp are logged in an AI-readable format to `~/.waif/logs/ask.log` with size-based rotation (5 MB max, keep 5 files).
+* If pane resolution or tmux injection fails, `ask` surfaces an inline error and exits non-zero.
 
 ### Constraints
 
-- No backward-compatibility requirement with the prior headless flow.
-- Target pane is resolved via config mapping (e.g., `workflow_agents.yaml`); no implicit best-effort guessing outside the mapping.
-- Invoking pane focus must remain unchanged.
+* No backward-compatibility requirement with the prior headless flow.
+* Target pane is resolved via config mapping (e.g., `workflow_agents.yaml`); no implicit best-effort guessing outside the mapping.
+* Invoking pane focus must remain unchanged.
 
 ### Existing state
 
-- `ask` calls a headless OpenCode server and parses results for a quick exchange; no TUI involvement and no logging of injected prompts.
+* `ask` calls a headless OpenCode server and parses results for a quick exchange; no TUI involvement and no logging of injected prompts.
 
 ### Desired change
 
-- Resolve the target agent pane via the configured mapping (e.g., `workflow_agents.yaml` or equivalent), not by ad-hoc pane name guessing.
-- Instruct tmux to open/attach the agent pane with OpenCode TUI, inject the provided prompt, and resume agent-side interaction there while keeping the invoking pane focused.
-- Emit an inline error and non-zero exit if the pane cannot be found or tmux injection fails; include actionable hints (e.g., “start workflow tmux session” or “check agent mapping”).
-- Append a log entry per invocation to `~/.waif/logs/ask.log` with size-based rotation (5 MB max size, keep 5 files); entry must include timestamp, agent identifier, and raw prompt in a machine-readable format.
+* Resolve the target agent pane via the configured mapping (e.g., `workflow_agents.yaml` or equivalent), not by ad-hoc pane name guessing.
+* Instruct tmux to open/attach the agent pane with OpenCode TUI, inject the provided prompt, and resume agent-side interaction there while keeping the invoking pane focused.
+* Emit an inline error and non-zero exit if the pane cannot be found or tmux injection fails; include actionable hints (e.g., “start workflow tmux session” or “check agent mapping”).
+* Append a log entry per invocation to `~/.waif/logs/ask.log` with size-based rotation (5 MB max size, keep 5 files); entry must include timestamp, agent identifier, and raw prompt in a machine-readable format.
 
 ### Flow / acceptance (decisions locked)
 
-1) Pane resolution: use the configured agent mapping (e.g., `config/workflow_agents.yaml`). Do not guess pane names outside the mapping.
-2) TUI dispatch: send the prompt to the mapped agent’s tmux pane, opening/attaching OpenCode TUI there; interaction continues in that pane while the invoking pane keeps focus.
-3) Failure handling: if the agent pane is missing or tmux injection fails, print an inline error with a hint (“start workflow tmux session” / “check agent mapping”) and exit non-zero.
-4) Logging: append one entry per invocation to `~/.waif/logs/ask.log` with rotation (5 MB, 5 files). Entry fields: ISO-8601 timestamp, agent identifier, raw prompt; machine-readable (e.g., JSONL). No response payload is logged.
+1. Pane resolution: use the configured agent mapping (e.g., `config/workflow_agents.yaml`). Do not guess pane names outside the mapping.
+2. TUI dispatch: send the prompt to the mapped agent’s tmux pane, opening/attaching OpenCode TUI there; interaction continues in that pane while the invoking pane keeps focus.
+3. Failure handling: if the agent pane is missing or tmux injection fails, print an inline error with a hint (“start workflow tmux session” / “check agent mapping”) and exit non-zero.
+4. Logging: append one entry per invocation to `~/.waif/logs/ask.log` with rotation (5 MB, 5 files). Entry fields: ISO-8601 timestamp, agent identifier, raw prompt; machine-readable (e.g., JSONL). No response payload is logged.
 
 Source issue: wf-ug7

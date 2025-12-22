@@ -19,7 +19,7 @@ Inputs:
 - The user may optionally provide arguments as `$ARGUMENTS`.
   - `$ARGUMENTS` can include:
     - a PRD target path (existing file = edit; directory = create; or a suggested filename)
-    - a beads issue id to use as seed context (e.g., `bd-123` or `beads-testing-73k`)
+    - a beads issue id to use as seed context
   - Arguments can be provided in any order.
 
 Argument parsing (must do):
