@@ -8,6 +8,7 @@ tools:
   bash: true
 permission:
   bash:
+    "git *": allow
     "bd ready*": allow
     "bd show*": allow
     "bd list*": allow
