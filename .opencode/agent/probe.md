@@ -26,6 +26,7 @@ Focus on:
 - Providing actionable feedback (impact, suspected root cause, remediation steps) for `@patch` and the Producer
 
 Workflow:
+- Before starting a session, ensure you are operating in git worktree `worktree_probe` and that it is up to date with `origin/main` (rebase if needed).
 - Pull issue/PR context via `bd show <id> --json`, then inspect changes with `git diff` plus references in `tests/*.test.ts`, `docs/Workflow.md`, `docs/release_management.md`, or other specs to locate risky areas.
 - Plan coverage: enumerate happy-path, boundary, and failure cases; note missing tests or telemetry.
 - Run the smallest relevant test/lint/build commands (`npm test`, `npm run lint`, targeted suites) and capture logs.

@@ -27,6 +27,7 @@ Focus on:
 - Surfacing blockers, risky refactors, or missing context early to the Producer and peer agents
 
 Workflow:
+- Before starting a session, ensure you are operating in git worktree `worktree_patch` and that it is up to date with `origin/main` (rebase if needed).
 - Begin by confirming context: `waif next --json` to verify the assignment, then `bd show <id> --json` plus relevant files/tests (`tests/*.test.ts`, `docs/Workflow.md`, `docs/release_management.md`, etc.).
 - Inspect the working tree via `git status`; stop and escalate if dirty.
 - Implement the smallest change that meets acceptance criteria, using `git diff` frequently to keep scope tight.

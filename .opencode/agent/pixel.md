@@ -18,6 +18,7 @@ Focus on:
 - Reviewing proposed assets for cohesion, accessibility, and repo-fit, calling out gaps early
 
 Workflow:
+- Before starting a session, ensure you are operating in git worktree `worktree_pixel` and that it is up to date with `origin/main` (rebase if needed). (Coordinate with Producer for context since Pixel has no shell access.)
 - Without shell access, request `bd show <id> --json` context packages or summaries from `@map`/the Producer; Pixel cannot run commands, so always rely on shared bd exports or notes.
 - Offer 1–2 asset approaches with concrete placement guidance (paths, filenames, formats) and clear trade-offs.
 - When refining, compare against repo conventions and recommend tweaks to keep assets maintainable.
