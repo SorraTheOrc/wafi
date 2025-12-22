@@ -459,6 +459,15 @@ pane_bootstrap_from_config() {
   fi
   
   tmux send-keys -t "$pane_id" "$cmd" C-m
+
+  # Re-apply the pane title after the agent's shell starts. Some shells or
+  # the `waif startWork` command emit terminal title escape sequences which
+  # can overwrite the title we set with `-T`. Re-assert the label a couple
+  # times with small delays to handle timing differences (safe no-op if
+  # tmux or pane no longer exist).
+  if [[ -n "$label" ]]; then
+    (sleep 1; tmux select-pane -t "$pane_id" -T "$label" 2>/dev/null || true; sleep 1; tmux select-pane -t "$pane_id" -T "$label" 2>/dev/null || true) &
+  fi
   
   # Set up idle task AFTER waif startWork has spawned the new shell
   # We need a small delay to let the new shell initialize
