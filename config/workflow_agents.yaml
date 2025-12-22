@@ -32,6 +32,19 @@ agents:
   # === CORE WINDOW ===
   # Primary agents for typical feature development workflow
 
+  # User pane - interactive shell for the Producer
+  - name: user
+    label: User
+    window: core
+    is_user: true
+    worktree: false
+    env:
+      BD_ACTOR: $USER
+    idle:
+      task: "tmux select-pane -T \"User\""
+      frequency: 10
+      variance: 10
+
   # Map (PM AI) - primary interface point for Producer
   - name: map
     label: Map (PM)
@@ -45,11 +58,14 @@ agents:
       frequency: 10
       variance: 10
 
+  # === SPECIALIST WINDOW ===
+  # On-demand agents for specific tasks (DevOps, meta-work, user shell)
+
   # Muse (Designer AI) - design variants and UX flows
   - name: muse
     label: Muse (Design)
     role: design
-    window: core
+    window: specialist
     worktree: true
     env:
       BD_ACTOR: muse
@@ -62,7 +78,7 @@ agents:
   - name: patch
     label: Patch (Impl)
     role: build
-    window: core
+    window: specialist
     worktree: true
     env:
       BD_ACTOR: patch
@@ -75,7 +91,7 @@ agents:
   - name: scribbler
     label: Scribbler (Docs)
     role: docs
-    window: core
+    window: specialist
     worktree: true
     env:
       BD_ACTOR: scribbler
@@ -88,7 +104,7 @@ agents:
   - name: pixel
     label: Pixel (Art)
     role: art
-    window: core
+    window: specialist
     worktree: true
     env:
       BD_ACTOR: pixel
@@ -101,28 +117,12 @@ agents:
   - name: probe
     label: Probe (QA)
     role: review
-    window: core
+    window: specialist
     worktree: true
     env:
       BD_ACTOR: probe
     idle:
       task: "tmux select-pane -T \"Probe (QA)\""
-      frequency: 10
-      variance: 10
-
-  # === SPECIALIST WINDOW ===
-  # On-demand agents for specific tasks (DevOps, meta-work, user shell)
-
-  # User pane - interactive shell for the Producer
-  - name: user
-    label: User
-    window: specialist
-    is_user: true
-    worktree: false
-    env:
-      BD_ACTOR: $USER
-    idle:
-      task: "tmux select-pane -T \"User\""
       frequency: 10
       variance: 10
 
@@ -138,3 +138,4 @@ agents:
       task: "tmux select-pane -T \"Ship (DevOps)\""
       frequency: 10
       variance: 10
+
