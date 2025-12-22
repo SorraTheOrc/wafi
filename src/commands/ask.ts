@@ -165,13 +165,14 @@ function findPaneForAgent(agent: AgentConfig): string {
   return match.id;
 }
 
-function sendToPane(paneId: string, prompt: string) {
+function sendToPane(paneId: string, prompt: string, agentName: string) {
   // In tests or dry-run mode, skip real tmux send
   if (process.env.WAIF_TMUX_DRY_RUN === '1' || process.env.WAIF_TMUX_PANES) return;
 
   const tmuxBin = process.env.WAIF_TMUX_BIN || 'tmux';
   const promptArg = JSON.stringify(prompt);
-  const commandString = `opencode --prompt ${promptArg}`;
+  const agentArg = JSON.stringify(agentName);
+  const commandString = `opencode --agent ${agentArg} --prompt ${promptArg}`;
   const res = spawnSync(tmuxBin, ['send-keys', '-t', paneId, commandString, 'C-m'], { encoding: 'utf8' });
   if (res.status !== 0) {
     const err = (res.stderr || res.stdout || '').toString().trim();
@@ -240,7 +241,7 @@ export function createAskCommand() {
       }
 
       const paneId = findPaneForAgent(agentCfg);
-      sendToPane(paneId, promptText);
+      sendToPane(paneId, promptText, agentCfg.name);
       appendLog(agentCfg.name, promptText);
 
       if (jsonOutput) {
