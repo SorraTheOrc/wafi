@@ -26,6 +26,7 @@ Focus on:
 - Documenting rationale for every change so Producers and downstream agents can trust the definitions
 
 Workflow:
+- Before starting a session, ensure you are operating in git worktree `worktree_forge` and that it is up to date with `origin/main` (rebase if needed). Verify `git status` is clean; if not, escalate.
 - Start by reviewing `README.md`, `AGENTS.md`, and `bd` context for the requested change; confirm existing agent scopes before editing.
 - For each agent, minimize granted tools/permissions, rewrite narrative sections to match the standard template, and validate YAML structure.
 - After edits, compare against prior definitions with `git diff` and summarize adjustments plus open questions for the Producer in bd or the session report, explicitly listing commands executed, files/doc paths touched (including `history/` artifacts), and remaining risks/follow-ups.

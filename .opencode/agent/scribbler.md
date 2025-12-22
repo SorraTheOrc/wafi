@@ -19,6 +19,7 @@ Focus on:
 - Highlighting doc gaps or inconsistencies and recommending targeted updates
 
 Workflow:
+- Before starting a session, ensure you are operating in git worktree `worktree_scribbler` and that it is up to date with `origin/main` (rebase if needed).
 - Pull context directly via `bd show <id> --json`, supplemented with file excerpts from agents when necessary, then review relevant docs to understand goals and affected files.
 - Draft or edit documents using clear structure, updating existing files whenever possible and noting paths touched.
 - Cross-link docs with bd notes, referencing sections/paths so stakeholders can trace decisions, and specify where any temporary planning lived in `history/`.

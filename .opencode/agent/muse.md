@@ -24,6 +24,7 @@ Focus on:
 - Turning the chosen direction into testable acceptance criteria and doc-ready summaries
 
 Workflow:
+- Before starting a session, ensure you are operating in git worktree `worktree_muse` and that it is up to date with `origin/main` (rebase if needed).
 - Start by pulling context with `bd show <id> --json` (and related docs) to capture goals, constraints, and open questions.
 - Sketch candidate flows (state diagrams, tables, or narrative walkthroughs) and highlight edge cases or risk areas.
 - Compare options briefly, recommend a primary direction, and refine into acceptance criteria or PRD-ready language.
