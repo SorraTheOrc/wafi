@@ -41,8 +41,8 @@ agents:
     env:
       BD_ACTOR: map
     idle:
-      task: "waif in-progress"
-      frequency: 30
+      task: "tmux select-pane -T \"Map (PM)\"; waif in-progress"
+      frequency: 10
       variance: 10
 
   # Muse (Designer AI) - design variants and UX flows
@@ -53,6 +53,10 @@ agents:
     worktree: true
     env:
       BD_ACTOR: muse
+    idle:
+      task: "tmux select-pane -T \"Muse (Design)\""
+      frequency: 10
+      variance: 10
 
   # Patch (Implementation AI) - implement small, correct changes
   - name: patch
@@ -62,6 +66,10 @@ agents:
     worktree: true
     env:
       BD_ACTOR: patch
+    idle:
+      task: "tmux select-pane -T \"Patch (Impl)\""
+      frequency: 10
+      variance: 10
 
   # Scribbler (Docs AI) - maintain PRDs and repo docs
   - name: scribbler
@@ -71,6 +79,10 @@ agents:
     worktree: true
     env:
       BD_ACTOR: scribbler
+    idle:
+      task: "tmux select-pane -T \"Scribbler (Docs)\""
+      frequency: 10
+      variance: 10
 
   # Pixel (Art AI) - asset generation and review support
   - name: pixel
@@ -80,6 +92,10 @@ agents:
     worktree: true
     env:
       BD_ACTOR: pixel
+    idle:
+      task: "tmux select-pane -T \"Pixel (Art)\""
+      frequency: 10
+      variance: 10
 
   # Probe (QA AI) - quality gates, test strategy, and risk checks
   - name: probe
@@ -89,6 +105,10 @@ agents:
     worktree: true
     env:
       BD_ACTOR: probe
+    idle:
+      task: "tmux select-pane -T \"Probe (QA)\""
+      frequency: 10
+      variance: 10
 
   # === SPECIALIST WINDOW ===
   # On-demand agents for specific tasks (DevOps, meta-work, user shell)
@@ -99,6 +119,12 @@ agents:
     window: specialist
     is_user: true
     worktree: false
+    env:
+      BD_ACTOR: $USER
+    idle:
+      task: "tmux select-pane -T \"User\""
+      frequency: 10
+      variance: 10
 
   # Ship (DevOps AI) - CI, build, release readiness
   - name: ship
@@ -108,3 +134,7 @@ agents:
     worktree: true
     env:
       BD_ACTOR: ship
+    idle:
+      task: "tmux select-pane -T \"Ship (DevOps)\""
+      frequency: 10
+      variance: 10
