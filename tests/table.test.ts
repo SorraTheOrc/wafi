@@ -27,15 +27,13 @@ describe('renderIssuesTable', () => {
     expect(out).toContain('ID');
     expect(out).toContain('Type / Status / Title');
     expect(out).toContain('Priority');
-    expect(out).toContain('Blockers');
     expect(out).toContain('Blocks');
     expect(out).toContain('Assignee');
 
     expect(out).toMatch(/wf-1/);
     expect(out).toContain(`${symbols.fallback?.issueType ?? '?'} ${symbols.fallback?.status ?? '?'} First`);
     expect(out).toMatch(/2/);
-    expect(out).toMatch(/3/);
-    expect(out).toMatch(/1/);
+    expect(out).toMatch(/0/);
     expect(out).toMatch(/alice/);
   });
 
@@ -76,7 +74,6 @@ describe('renderIssuesTable', () => {
       'ID',
       'Type / Status / Title',
       'Priority',
-      'Blockers',
       'Blocks',
       'Assignee',
     ]);

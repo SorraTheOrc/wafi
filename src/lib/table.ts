@@ -9,9 +9,6 @@ export type IssueForTable = {
   assignee?: string;
   dependency_count?: number;
   dependent_count?: number;
-  // We support both shapes:
-  // - bd show: dependencies[] entries are issue-like objects w/ dependency_type + status
-  // - older/jsonl-ish: dependencies[] entries are edge-like objects w/ type + depends_on_id
   dependencies?: Array<{ id?: string; status?: string; dependency_type?: string; type?: string; depends_on_id?: string }>;
 };
 
@@ -31,9 +28,7 @@ function computeBlockersCount(issue: IssueForTable): number {
     }).length;
   }
 
-  // Fallback: Beads list output exposes only total dependency count.
   if (typeof issue.dependency_count === 'number') return issue.dependency_count;
-
   return 0;
 }
 
@@ -67,19 +62,14 @@ export function renderIssuesTable(issues: IssueForTable[], options: RenderIssues
 
   const sortMode = options.sort ?? 'id';
 
-  const rows = issues
-    .map((i) => {
-      const blockers = computeBlockersCount(i);
-      const blocks = computeBlocksCount(i);
-      return {
-        id: i.id,
-        title: renderIssueTitle(i, 0),
-            priority: typeof i.priority === 'number' ? String(i.priority) : '',
-        blockers: String(blockers),
-        blocks: String(blocks),
-        assignee: typeof i.assignee === 'string' ? i.assignee : '',
-      };
-    });
+  const rows = issues.map((issue) => ({
+    id: issue.id,
+    title: renderIssueTitle(issue, 0),
+    priority: typeof issue.priority === 'number' ? String(issue.priority) : '',
+    blocks: String(computeBlocksCount(issue)),
+    blockers: String(computeBlockersCount(issue)),
+    assignee: typeof issue.assignee === 'string' ? issue.assignee : '',
+  }));
 
   if (sortMode === 'id') {
     rows.sort((a, b) => a.id.localeCompare(b.id));
@@ -89,60 +79,44 @@ export function renderIssuesTable(issues: IssueForTable[], options: RenderIssues
     id: 'ID',
     title: 'Type / Status / Title',
     priority: 'Priority',
-    blockers: 'Blockers',
     blocks: 'Blocks',
     assignee: 'Assignee',
-  };
+  } as const;
 
-  // Base column contents lengths (minimums derived from header or content)
   const baseWidths = {
     id: Math.max(headers.id.length, ...rows.map((r) => r.id.length)),
     title: Math.max(headers.title.length, ...rows.map((r) => r.title.length)),
     priority: Math.max(headers.priority.length, ...rows.map((r) => r.priority.length)),
-    blockers: Math.max(headers.blockers.length, ...rows.map((r) => r.blockers.length)),
     blocks: Math.max(headers.blocks.length, ...rows.map((r) => r.blocks.length)),
     assignee: Math.max(headers.assignee.length, ...rows.map((r) => r.assignee.length)),
-  };
+  } as const;
 
-  // Determine available terminal width. If unavailable, fall back to a sane default.
   const termWidth = (typeof process !== 'undefined' && process.stdout && typeof process.stdout.columns === 'number')
     ? process.stdout.columns
     : 120;
 
-  // Columns in display order (left-to-right). Title is mandatory; others may be dropped from the right.
-  const colOrder: Array<keyof typeof baseWidths> = ['id', 'title', 'priority', 'blockers', 'blocks', 'assignee'];
-
-  // Minimum width constraints
-  const minTitleWidth = 4; // allow truncation like 'a…'
+  const colOrder: Array<keyof typeof baseWidths> = ['id', 'title', 'priority', 'blocks', 'assignee'];
+  const minTitleWidth = 4;
   const sep = '  ';
-
-  // Start with desired widths equal to baseWidths but cap title with a reasonable max.
   const maxTitleCap = 60;
-  const desiredWidths: Record<string, number> = {
+  const desiredWidths: Record<keyof typeof baseWidths, number> = {
     id: baseWidths.id,
     title: Math.min(maxTitleCap, baseWidths.title),
     priority: baseWidths.priority,
-    blockers: baseWidths.blockers,
     blocks: baseWidths.blocks,
     assignee: baseWidths.assignee,
   };
 
-  // Helper to compute total line width for a given set of visible columns
-  function totalWidthFor(visibleCols: string[]) {
+  if (desiredWidths.title < headers.title.length) desiredWidths.title = headers.title.length;
+
+  const totalWidthFor = (visibleCols: Array<keyof typeof baseWidths>) => {
     const colsWidth = visibleCols.reduce((sum, c) => sum + desiredWidths[c], 0);
     const gaps = Math.max(0, visibleCols.length - 1) * sep.length;
     return colsWidth + gaps;
-  }
+  };
 
-  // Determine which columns to show. Always include 'id' and 'title'. Drop from the right until fits.
   const visibleCols = [...colOrder];
-
-  // Ensure title has at least header length initially
-  if (desiredWidths.title < headers.title.length) desiredWidths.title = headers.title.length;
-
-  // Reduce title width to fit if necessary, but do not drop it.
   while (totalWidthFor(visibleCols) > termWidth) {
-    // Try to drop the rightmost non-mandatory column (not 'id' or 'title')
     const droppable = visibleCols.slice().reverse().find((c) => c !== 'title' && c !== 'id');
     if (droppable) {
       const idx = visibleCols.indexOf(droppable);
@@ -150,18 +124,15 @@ export function renderIssuesTable(issues: IssueForTable[], options: RenderIssues
       continue;
     }
 
-    // If no droppable columns remain, attempt to shrink the title down to minTitleWidth
     if (desiredWidths.title > minTitleWidth) {
       desiredWidths.title = Math.max(minTitleWidth, desiredWidths.title - 1);
       continue;
     }
 
-    // As a last resort, if even minimal title + id don't fit, fall back to truncating aggressively (allow overflow)
     break;
   }
 
-  // Recompute widths for columns that remain. Ensure title does not exceed its desired width.
-  const widths: Record<string, number> = {} as any;
+  const widths: Partial<Record<keyof typeof baseWidths, number>> = {};
   for (const c of visibleCols) {
     widths[c] = desiredWidths[c];
   }
@@ -171,13 +142,13 @@ export function renderIssuesTable(issues: IssueForTable[], options: RenderIssues
   const lines: string[] = [];
   const headerCols: string[] = [];
   for (const c of visibleCols) {
-    headerCols.push(padRight((headers as any)[c], widths[c]));
+    headerCols.push(padRight(headers[c], widths[c]!));
   }
   lines.push(headerCols.join(sep));
 
   const dashCols: string[] = [];
   for (const c of visibleCols) {
-    dashCols.push(dash(widths[c]));
+    dashCols.push(dash(widths[c]!));
   }
   lines.push(dashCols.join(sep));
 
@@ -185,14 +156,14 @@ export function renderIssuesTable(issues: IssueForTable[], options: RenderIssues
     const rowCols: string[] = [];
     for (const c of visibleCols) {
       let val = '';
-      if (c === 'title') val = truncate(r.title, widths.title);
+      if (c === 'title') val = truncate(r.title, widths.title!);
       else val = (r as any)[c] ?? '';
-      rowCols.push(padRight(val, widths[c]));
+      rowCols.push(padRight(val, widths[c]!));
     }
 
     const rawLine = rowCols.join(sep);
 
-    const blockersNumber = Number((r as any).blockers);
+    const blockersNumber = Number(r.blockers);
     const color = options.color;
     if (color?.enabled && Number.isFinite(blockersNumber) && blockersNumber > 0) {
       lines.push(`${color.blockedRow}${rawLine}${color.reset}`);
