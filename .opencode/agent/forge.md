@@ -9,6 +9,7 @@ tools:
   bash: true
 permission:
   bash:
+    "git *": allow
     "git status": allow
     "git diff*": allow
     "git log*": allow

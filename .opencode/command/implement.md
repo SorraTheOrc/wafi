@@ -51,6 +51,7 @@ Process:
 
    - Restate the acceptance criteria and constraints from the issue JSON.
    - Identify dependencies/blockers; if blocked, explain what is missing and ask the user how to proceed.
+   - Review the issue `description`, `notes`, and any `comments` for references to PRDs, implementation plans, or other linked docs; if present, open and read those sources before proceeding.
 
 1.1 Definition gate (must do before implementation)
 
