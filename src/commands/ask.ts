@@ -171,7 +171,7 @@ function sendToPane(paneId: string, prompt: string, agentName: string) {
 
   const tmuxBin = process.env.WAIF_TMUX_BIN || 'tmux';
   const promptArg = JSON.stringify(prompt);
-  const agentArg = JSON.stringify(agentName);
+  const agentArg = JSON.stringify(agentName.toLowerCase());
   const commandString = `opencode --agent ${agentArg} --prompt ${promptArg}`;
   const res = spawnSync(tmuxBin, ['send-keys', '-t', paneId, commandString, 'C-m'], { encoding: 'utf8' });
   if (res.status !== 0) {
