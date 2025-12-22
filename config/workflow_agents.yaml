@@ -41,7 +41,7 @@ agents:
     env:
       BD_ACTOR: map
     idle:
-      task: "clear; waif in-progress"
+      task: "waif in-progress"
       frequency: 30
       variance: 10
 
