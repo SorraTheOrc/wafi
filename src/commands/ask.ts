@@ -144,9 +144,17 @@ function findPaneForAgent(agent: AgentConfig): string {
   const session = process.env.WORKFLOW_TMUX_SESSION || 'waif-workflow';
   const targetTitle = agent.label || agent.name;
   const targetWindow = agent.window || 'core';
+
   const match =
-    panes.find((p) => p.session === session && p.window === targetWindow && p.title === targetTitle) ||
-    panes.find((p) => p.session === session && p.title === targetTitle);
+    panes.find(
+      (p) =>
+        p.session === session &&
+        p.window === targetWindow &&
+        (p.title === targetTitle || p.title.toLowerCase().startsWith(targetTitle.toLowerCase())),
+    ) ||
+    panes.find(
+      (p) => p.session === session && (p.title === targetTitle || p.title.toLowerCase().startsWith(targetTitle.toLowerCase())),
+    );
 
   if (!match) {
     throw new CliError(
@@ -172,13 +180,14 @@ function sendToPane(paneId: string, prompt: string) {
 export function createAskCommand() {
   const cmd = new Command('ask');
   cmd
-    .description('One-shot agent ask command (tmux TUI inject)')
+    .description('One-shot agent ask command (tmux TUI inject) — matches pane title prefix')
     .argument('[prompt...]', 'Prompt text, or - to read stdin (variadic)')
     .option('--agent <name>', 'Agent name to use (default: map)')
     .option('--json', 'Emit JSON output')
     .action(async (promptArg: string | string[] | undefined, options: any, command: Command) => {
       const jsonOutput = Boolean(options.json ?? command.parent?.getOptionValue('json'));
       const map = loadAgentMap();
+      const agents = loadWorkflowAgents();
       let agent = options.agent || process.env.OPENCODE_DEFAULT_AGENT || 'map';
 
       let promptText: string | undefined;
@@ -200,9 +209,21 @@ export function createAskCommand() {
 
       const promptWords = promptText.trim().split(/\s+/);
       const firstWord = promptWords[0];
-      if (!options.agent && firstWord && map[firstWord]) {
-        agent = firstWord;
-        promptWords.shift();
+      const lowerFirst = firstWord?.toLowerCase();
+
+      if (!options.agent && firstWord) {
+        if (map[firstWord]) {
+          agent = firstWord;
+          promptWords.shift();
+        } else {
+          const configMatch = Object.values(agents).find(
+            (a) => a.name.toLowerCase() === lowerFirst || a.label?.toLowerCase() === lowerFirst,
+          );
+          if (configMatch) {
+            agent = configMatch.name;
+            promptWords.shift();
+          }
+        }
         promptText = promptWords.join(' ').trim();
         if (!promptText) {
           throw new CliError('Missing prompt after removing agent name', 2);
@@ -211,7 +232,6 @@ export function createAskCommand() {
 
       const mappedAgent = map[agent] || agent;
 
-      const agents = loadWorkflowAgents();
       const agentCfg = agents[mappedAgent];
       if (!agentCfg) {
         throw new CliError(`Agent '${mappedAgent}' not defined in workflow_agents.yaml`, 1);
