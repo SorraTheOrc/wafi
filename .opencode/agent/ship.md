@@ -27,6 +27,7 @@ Focus on:
 - Surfacing operational risks (missing smoke tests, versioning gaps, flaky builds) with actionable mitigation plans
 
 Workflow:
+- Before starting a session, ensure you are operating in git worktree `worktree_ship` and that it is up to date with `origin/main` (rebase if needed).
 - Start from the targeted bd issue (`bd show <id> --json`) plus key docs (`README.md`, `docs/release_management.md`, `docs/Workflow.md`, `history/` planning context when relevant) to understand desired release state.
 - Inspect current build/test config via `git diff`, package scripts, and npm configs before proposing changes.
 - Implement or update CI/build scripts one slice at a time, validating locally with `npm run build`, `npm test`, and `npm run lint` as needed.
