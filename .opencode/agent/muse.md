@@ -1,6 +1,6 @@
 ---
 description: Muse (Designer AI) — design variants and UX flows
-mode: subagent
+mode: primary
 temperature: 0.2
 tools:
   write: true

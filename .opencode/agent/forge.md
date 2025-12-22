@@ -1,7 +1,7 @@
 ---
 description: Forge (Agent-file Authoring AI) — drafts and validates OpenCode agent definitions
-mode: subagent
 model: gpt-5.1
+mode: primary
 temperature: 0.2
 tools:
   write: true

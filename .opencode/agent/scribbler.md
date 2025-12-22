@@ -1,6 +1,6 @@
 ---
 description: Scribbler (Docs AI) — maintain PRDs and repo docs
-mode: subagent
+mode: primary
 temperature: 0.3
 tools:
   write: true

@@ -1,6 +1,6 @@
 ---
 description: Pixel (Art AI) — asset generation and review support
-mode: subagent
+mode: primary
 temperature: 0.4
 tools:
   write: true

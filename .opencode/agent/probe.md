@@ -1,6 +1,6 @@
 ---
 description: Probe (QA AI) — quality gates, test strategy, and risk checks
-mode: subagent
+mode: primary
 temperature: 0.1
 tools:
   write: false

@@ -1,6 +1,6 @@
 ---
 description: Ship (DevOps AI) — CI, build, release readiness
-mode: subagent
+mode: primary
 temperature: 0.2
 tools:
   write: true

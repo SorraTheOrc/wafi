@@ -1,6 +1,6 @@
 ---
 description: Patch (Implementation AI) — implement small, correct changes
-mode: subagent
+mode: primary
 temperature: 0.1
 tools:
   write: true
