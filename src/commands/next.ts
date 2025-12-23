@@ -311,14 +311,6 @@ export function createNextCommand() {
         const payload = { ...top.issue, waif };
         emitJson(payload);
       } else {
-        const inProgress = loadInProgressIssues(verbose);
-        if (inProgress.length) {
-          logStdout(heading('In Progress'));
-          logStdout('');
-          logStdout(issuesTable(inProgress));
-          logStdout('');
-        }
-
         const recommended = [top.issue];
 
         logStdout(heading('Recommended Summary'));
