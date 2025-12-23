@@ -313,12 +313,10 @@ export function createNextCommand() {
       } else {
         const recommended = [top.issue];
 
-        logStdout(heading('Recommended Summary'));
-        logStdout('');
         logStdout(issuesTable(recommended));
         logStdout('');
 
-        logStdout(heading('Recommended Detail'));
+        logStdout(heading('Details'));
         logStdout('');
         if (isCliAvailable('bd')) {
           try {
