@@ -13,7 +13,7 @@ Source issue: wf-10f
   * This adds friction during day-to-day execution and reduces at-a-glance clarity in narrow terminal panes (e.g., tmux).
 
 * Goals
-  * Make blocking dependencies visible directly in `waif in-progress` human output while retaining the Blocks column for dependents in the main table.
+  * Make blocking dependencies visible directly in `waif in-progress` human output.
   * Reuse the existing table renderer so the output remains consistent with other commands.
   * Preserve machine-readable output (`--json`) for automation.
 
@@ -38,18 +38,15 @@ Source issue: wf-10f
 
 * Functional requirements (MVP)
   1. `waif in-progress` prints the existing “In Progress” heading and main in-progress table, as it does today.
-  2. After each issue row in the main table, `waif in-progress` prints indented summaries for blockers and children (skip the section entirely if no entries exist):
+  2. After each issue row in the main table, `waif in-progress` prints an indented blocker section:
      * If there are one or more `blocks` dependencies whose target issue status is not terminal (`closed`, `done`, `tombstone`), print an indented sub-table listing those blocking issues.
+     * If there are zero such blockers, print an indented line: `No blockers`.
   3. The blocker sub-table must:
      * Use the same table rendering function/format as the main table.
      * Be sorted by blocking issue ID (stable ordering).
      * Be indented by **2 spaces** on every line.
-     * Prefix with a two-space indented `Blockers` heading before the table, and indent all subsequent lines (table content) by four spaces for consistent readability.
-     * To reduce vertical scanning cost, the blockers section must render before the children section for each issue.
-     * The children section must use the same format (heading indented two spaces + table indented four spaces) and show `parent-child` dependents ordered by ID, excluding terminal statuses.
-  4. Fallback behavior when dependency or child details are incomplete:
+  4. Fallback behavior when dependency details are incomplete:
      * If the command cannot resolve a blocker's status/details (e.g., missing enrichment data), it should still list the blocker entry (treat as blocking) with whatever fields are available.
-     * If a child issue cannot be rendered fully, still include an entry with whatever metadata is available.
   5. `waif in-progress --json` remains unchanged.
 
 * Non-functional requirements
