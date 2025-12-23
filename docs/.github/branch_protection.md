@@ -18,7 +18,7 @@ Required protections
 Suggested workflow enforcement
 
 - Enforce a merge strategy: prefer "Squash and merge" for feature PRs to keep main concise. Document exceptions when preserving commit history is required.
-- Require that PR title contains bd-<id> for traceability (enforceable via a CI check or GitHub Action).
+- Require that PR title contains bd-<id> for traceability (enforceable via a CI check or GitHub Action). Suggested status check name: `pr/validate-title` (see wf-79y.14).
 - Use branch protection to block merges that do not have an updated bd note or failing CI.
 
 How to apply
