@@ -9,12 +9,13 @@ tools:
   bash: true
 permission:
   bash:
-    "git *": allow
-    "bd show*": allow
-    "bd ready*": allow
     "git status": allow
     "git diff*": allow
     "git log*": allow
+    "git show*": allow
+    "git rev-parse*": allow
+    "bd show*": allow
+    "bd ready*": allow
     "npm test*": allow
     "npm run lint": allow
     "npm run build": allow
