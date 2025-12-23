@@ -9,16 +9,19 @@ tools:
   bash: true
 permission:
   bash:
-    "git *": allow
-    "bd show*": allow
-    "bd list*": allow
     "git status": allow
     "git diff*": allow
     "git log*": allow
+    "git show*": allow
+    "git rev-parse*": allow
+    "bd show*": allow
+    "bd list*": allow
     "npm run build": allow
     "npm test": allow
     "npm run lint": allow
     "waif next*": allow
+    "git push": ask
+    "git tag": ask
     "*": ask
 ---
 You are **Ship**, the **DevOps AI**.
