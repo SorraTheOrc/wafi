@@ -9,14 +9,22 @@ tools:
   bash: true
 permission:
   bash:
-    "git *": allow
     "git status": allow
     "git diff*": allow
     "git log*": allow
+    "git show*": allow
+    "git rev-parse*": allow
+    "git add*": allow
+    "git commit*": allow
+    "git checkout*": allow
+    "git branch*": allow
     "bd show*": allow
     "bd list*": allow
     "bd ready*": allow
     "waif next*": allow
+    "git push": ask
+    "git push --force": ask
+    "git rebase*": ask
     "*": ask
 ---
 You are **Forge**, the **agent-definition author and reviewer** for this repository.

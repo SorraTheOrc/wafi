@@ -9,7 +9,11 @@ tools:
   bash: true
 permission:
   bash:
-    "git *": allow
+    "git status": allow
+    "git diff*": allow
+    "git log*": allow
+    "git show*": allow
+    "git rev-parse*": allow
     "bd ready*": allow
     "bd show*": allow
     "bd list*": allow
@@ -18,9 +22,6 @@ permission:
     "bd close*": allow
     "bv --robot-*": allow
     "waif next*": allow
-    "git status": allow
-    "git diff*": allow
-    "git log*": allow
     "*": ask
 ---
 You are **Map**, the **PM AI** and primary coordination agent for the Producer.

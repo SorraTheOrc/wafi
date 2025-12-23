@@ -9,13 +9,14 @@ tools:
   bash: true
 permission:
   bash:
-    "git *": allow
-    "bd show*": allow
-    "bd list*": allow
-    "bd ready*": allow
     "git status": allow
     "git diff*": allow
     "git log*": allow
+    "git show*": allow
+    "git rev-parse*": allow
+    "bd show*": allow
+    "bd list*": allow
+    "bd ready*": allow
     "*": ask
 ---
 You are **Muse**, the **Designer AI**.
