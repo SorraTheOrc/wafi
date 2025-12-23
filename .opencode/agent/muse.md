@@ -1,7 +1,8 @@
 ---
 description: Muse (Designer AI) — design variants and UX flows
 mode: primary
-temperature: 0.2
+model: github-copilot/gpt-5.2
+temperature: 0.7
 tools:
   write: true
   edit: true

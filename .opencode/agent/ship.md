@@ -1,7 +1,8 @@
 ---
 description: Ship (DevOps AI) — CI, build, release readiness
 mode: primary
-temperature: 0.2
+model: github-copilot/gpt-5-mini
+temperature: 0.4
 tools:
   write: true
   edit: true

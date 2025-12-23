@@ -1,8 +1,8 @@
 ---
 description: Forge (Agent-file Authoring AI) — drafts and validates OpenCode agent definitions
-model: github-copilot/gpt-5.1
+model: github-copilot/gpt-5-mini
 mode: primary
-temperature: 0.2
+temperature: 0.3
 tools:
   write: true
   edit: true
