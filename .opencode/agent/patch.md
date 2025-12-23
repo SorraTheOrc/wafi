@@ -1,6 +1,7 @@
 ---
 description: Patch (Implementation AI) — implement small, correct changes
 mode: primary
+model: github-copilot/GPT-5.1-Codex
 temperature: 0.1
 tools:
   write: true
