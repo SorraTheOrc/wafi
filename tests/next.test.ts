@@ -48,13 +48,14 @@ describe('waif next', () => {
     expect(exitCode).toBe(0);
 
     const idxSummary = stdout.indexOf('# Recommended Summary');
-    const idxDetail = stdout.indexOf('# Recommended Detail');
+    const idxDetail = stdout.indexOf('# Details');
 
     // In Progress should no longer be printed by `waif next`
     expect(stdout).not.toContain('# In Progress');
 
-    expect(idxSummary).toBeGreaterThanOrEqual(0);
-    expect(idxDetail).toBeGreaterThan(idxSummary);
+    // Recommended Summary heading was removed; summary table should still be present
+    expect(stdout).not.toContain('# Recommended Summary');
+    expect(idxDetail).toBeGreaterThanOrEqual(0);
 
     // summary table contains the chosen issue
     expect(stdout).toContain('wf-2');
@@ -78,8 +79,8 @@ describe('waif next', () => {
 
     expect(exitCode).toBe(0);
     expect(stdout).not.toContain('# In Progress');
-    expect(stdout).toContain('# Recommended Summary');
-    expect(stdout).toContain('# Recommended Detail');
+    expect(stdout).not.toContain('# Recommended Summary');
+    expect(stdout).toContain('# Details');
   });
 
   it('picks highest bv score when provided', async () => {
