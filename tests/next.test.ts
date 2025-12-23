@@ -65,7 +65,7 @@ describe('waif next', () => {
     expect(inProgressLine).toContain(
       `wf-ip1  ${symbols.fallback?.issueType ?? '?'} ${symbols.status.in_progress} In progress one`,
     );
-    expect(inProgressLine).toMatch(/\s+0\s+alice/);
+    expect(inProgressLine).toMatch(/\s+0\s+1\s+0\s+alice/);
 
     // summary table contains the chosen issue
     expect(stdout).toContain('wf-2');
