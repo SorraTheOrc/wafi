@@ -108,13 +108,21 @@ Process (must follow):
    - If NEW: propose a PRD file path under `docs/dev/`.
      - Convention: `docs/dev/<feature>_PRD.md`.
 
-6. Create or update the Beads issue (must do)
+6. Feedback Gate
+
+  Propose the description of the bead, priority level, parent, related isses etc.
+
+  Ask the user if there are any clarifictions, changes or further research required before proceeding. Carry out any further instructtions before proceeding. 
+
+  Only proceed to the next step if the user gives permission to do so.
+
+7. Create or update the Beads issue (must do)
 
    Create a new Beads issue, or update an existing issue, so that the description contains the full intake brief and links.
 
    - Type: `feature`
    - Priority: default to `2` unless the user indicates urgency/risk.
-   - Title: `<working title>: Intake brief`
+   - Title: `<descriptive working title>`
 
    Use `bd create ... --json`.
 
@@ -169,11 +177,10 @@ Process (must follow):
 
    If there is a suitable parent issue then create the new issue as a sub-issue (use `--parent <id>`).
 
-7. Finish
+8. Finish
 
    After creating the issue, print:
 
    - The new Beads issue id
    - A 1–2 sentence summary
-   - The exact next command the user should run
-     - Example: `/prd docs/dev/<feature>_PRD.md <issue-id>`
+   - Close the response with "This completes the Intake process for <dead-id>"
