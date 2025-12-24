@@ -1,8 +1,0 @@
-# ooda probe log
-
-[$(date -Is)]
-tmux	map:0.0	Map busy wf-cvz	12345
-pane=map:0.0	status=Busy	title=Map busy wf-cvz	pid=12345	stat=	pcpu=	reason=keyword
-pane=forge:1.0	status=Free	title=Forge idle	pid=23456	stat=	pcpu=	reason=keyword
-pane=ship:2.0	status=Busy	title=ship running tests	pid=34567	stat=	pcpu=	reason=keyword
-pane=sentinel:3.1	status=Free	title=idle	pid=	stat=	pcpu=	reason=idle-title

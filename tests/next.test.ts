@@ -1,9 +1,8 @@
-import { tmpdir } from 'os';
 import { join } from 'path';
 import { writeFileSync } from 'fs';
+import { tmpdir } from 'os';
 import { execa } from 'execa';
 import { describe, expect, it } from 'vitest';
-import { getDefaultSymbols } from '../src/lib/symbols.js';
 
 const CLI = [process.execPath, 'dist/index.js'];
 
@@ -26,7 +25,6 @@ describe('waif next', () => {
         status: 'in_progress',
         priority: 0,
         assignee: 'alice',
-        // With full dependency objects present, waif should display *actual* blockers.
         dependencies: [
           { id: 'wf-d1', dependency_type: 'blocks', status: 'open' },
           { id: 'wf-d2', dependency_type: 'blocks', status: 'closed' },
@@ -47,26 +45,17 @@ describe('waif next', () => {
 
     expect(exitCode).toBe(0);
 
-    const idxSummary = stdout.indexOf('# Recommended Summary');
     const idxDetail = stdout.indexOf('# Details');
 
     // In Progress should no longer be printed by `waif next`
     expect(stdout).not.toContain('# In Progress');
 
-    // in-progress table: feature shows in-progress inline; ensure expectations
-    expect(stdout).toContain('wf-ip1');
-    const symbols = getDefaultSymbols();
-    const inProgressLine = stdout
-      .split('\n')
-      .find((l) => l.includes('wf-ip1') && !l.includes('ID'));
-    expect(inProgressLine).toBeTruthy();
-    expect(inProgressLine).toContain(
-      `wf-ip1  ${symbols.fallback?.issueType ?? '?'} ${symbols.status.in_progress} In progress one`,
-    );
-    expect(inProgressLine).toMatch(/\s+0\s+alice/);
+    // in-progress issues should not be rendered inline anymore
+    expect(stdout).not.toContain('wf-ip1');
 
     // Also respect main's removal of the Recommended Summary heading
     expect(stdout).not.toContain('# Recommended Summary');
+
     expect(idxDetail).toBeGreaterThanOrEqual(0);
 
     // summary table contains the chosen issue
@@ -147,9 +136,7 @@ describe('waif next', () => {
 
   it('errors when no eligible issues', async () => {
     const tmpIssues = join(tmpdir(), `issues-${Date.now() + 2}.jsonl`);
-    makeIssues(tmpIssues, [
-      { id: 'wf-1', status: 'closed' },
-    ]);
+    makeIssues(tmpIssues, [{ id: 'wf-1', status: 'closed' }]);
 
     const { exitCode, stderr } = await execa(CLI[0], [...CLI.slice(1), 'next'], {
       env: { WAIF_ISSUES_PATH: tmpIssues, PATH: '' },
