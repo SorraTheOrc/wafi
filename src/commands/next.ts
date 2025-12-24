@@ -47,7 +47,7 @@ interface Issue {
   assignee?: string;
   dependency_count?: number;
   dependent_count?: number;
-  dependencies?: Array<{ type?: string; depends_on_id?: string }>; // best-effort shape
+  dependencies?: Array<{ type?: string; depends_on_id?: string }>;
   [key: string]: unknown;
 }
 
@@ -82,60 +82,6 @@ function runBd(args: string[], timeout = 30000): string {
   return runSpawn('bd', args, timeout).stdout;
 }
 
-function loadInProgressIssues(verbose: boolean): Issue[] {
-  const envJson = process.env.WAIF_IN_PROGRESS_JSON;
-  if (envJson) {
-    try {
-      const parsed = JSON.parse(envJson);
-      if (Array.isArray(parsed)) return parsed as Issue[];
-    } catch (e) {
-      if (verbose) process.stderr.write(`[debug] failed to parse WAIF_IN_PROGRESS_JSON: ${(e as Error).message}\n`);
-    }
-    return [];
-  }
-
-  if (!isCliAvailable('bd')) return [];
-
-  let base: Issue[] = [];
-  try {
-    const out = runBd(['list', '--status', 'in_progress', '--json']);
-    const parsed = JSON.parse(out);
-    if (Array.isArray(parsed)) base = parsed as Issue[];
-  } catch (e) {
-    if (verbose) process.stderr.write(`[debug] bd list in_progress failed: ${(e as Error).message}\n`);
-    return [];
-  }
-
-  // `bd list` only gives `dependency_count` (total deps), not the actual blocking deps.
-  // To render an accurate Blockers count in the table, we enrich in-progress issues
-  // with dependency details from `bd show --json`.
-  try {
-    const ids = base.map((i) => i.id).filter(Boolean);
-    if (!ids.length) return base;
-
-    const chunkSize = 40;
-    const fullById = new Map<string, Issue>();
-
-    for (let idx = 0; idx < ids.length; idx += chunkSize) {
-      const chunk = ids.slice(idx, idx + chunkSize);
-      const out = runBd(['show', ...chunk, '--json']);
-      const parsed = JSON.parse(out);
-      const list = Array.isArray(parsed) ? (parsed as Issue[]) : [parsed as Issue];
-      for (const issue of list) {
-        if (issue?.id) fullById.set(issue.id, issue);
-      }
-    }
-
-    return base.map((i) => {
-      const full = fullById.get(i.id);
-      // Prefer the full issue (has dependencies + statuses), but preserve list-only fields if needed.
-      return full ? { ...i, ...full } : i;
-    });
-  } catch (e) {
-    if (verbose) process.stderr.write(`[debug] bd show in_progress enrichment failed: ${(e as Error).message}\n`);
-    return base;
-  }
-}
 
 function runBv(args: string[], timeout = 30000): string {
   return runSpawn('bv', args, timeout).stdout;
@@ -189,7 +135,6 @@ function loadIssues(verbose: boolean): LoadResult {
 }
 
 function loadBvScores(verbose: boolean): BvResult {
-  // Env override for tests or offline usage
   const envJson = process.env.WAIF_BV_PRIORITY_JSON;
   if (envJson) {
     try {
@@ -290,17 +235,17 @@ export function createNextCommand() {
 
       const { issues, source } = loadIssues(verbose);
       const bv = loadBvScores(verbose);
-       const top = selectTop(issues, bv, verbose);
+      const top = selectTop(issues, bv, verbose);
 
-       const clipboardEnabled = Boolean(options.clipboard ?? true);
-       if (clipboardEnabled) {
-         const clipboardResult = copyToClipboard(top.issue.id);
-         if (!clipboardResult.ok && verbose) {
-           process.stderr.write(`[debug] clipboard copy failed: ${clipboardResult.error}\n`);
-         }
-       }
+      const clipboardEnabled = Boolean(options.clipboard ?? true);
+      if (clipboardEnabled) {
+        const clipboardResult = copyToClipboard(top.issue.id);
+        if (!clipboardResult.ok && verbose) {
+          process.stderr.write(`[debug] clipboard copy failed: ${clipboardResult.error}\n`);
+        }
+      }
 
-       const waif = {
+      const waif = {
         score: top.score,
         rationale: top.rationale,
         rank: 1,
