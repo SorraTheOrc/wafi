@@ -295,17 +295,21 @@ pane_bootstrap_from_config() {
   # Build the command to send to the pane
   local cmd="cd \"$working_dir\""
   
-  # Add BEADS_NO_DAEMON
-  cmd+="; export BEADS_NO_DAEMON=1"
-  
-  # Add env vars from config
+  # Add env vars from config (if any)
   if [[ -n "$env_str" ]]; then
-    # env_str is space-separated KEY=value pairs
+    # env_str is space-separated KEY='value' pairs
     for pair in $env_str; do
       cmd+="; export $pair"
     done
   fi
-  
+
+  # Add BEADS_NO_DAEMON and canonical agent id envs to make pane detection deterministic
+  # We export these after config envs to ensure the canonical agent identity is set by name
+  cmd+="; export BEADS_NO_DAEMON=1"
+  cmd+="; export BD_ACTOR='$name'"
+  cmd+="; export WAIF_AGENT='$name'"
+  cmd+="; export OPENCODE_AGENT='$name'"
+
   cmd+="; clear"
   
   # Show warning if worktree failed

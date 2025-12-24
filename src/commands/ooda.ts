@@ -1,9 +1,11 @@
 import { spawnSync } from 'node:child_process';
 import { Command } from 'commander';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import yaml from 'yaml';
 import { emitJson, logStdout } from '../lib/io.js';
 import { CliError } from '../types.js';
+import { loadAgentMap } from '../lib/opencode.js';
 
 interface PaneRow {
   pane: string;
@@ -16,9 +18,12 @@ interface PaneRow {
 }
 
 interface PaneSourceRow {
-  pane: string;
+  pane: string; // human-friendly agent label or raw pane id
+  id?: string; // original pane id from tmux (session:window.pane)
   title: string;
   pid?: string;
+  session?: string;
+  window?: string;
 }
 
 interface ProbeSource {
@@ -32,10 +37,69 @@ function runCmd(cmd: string, args: string[]): { stdout: string; stderr: string; 
   return { stdout: res.stdout ?? '', stderr: res.stderr ?? '', status: res.status ?? 0 };
 }
 
+export function getAgentFromProc(pid: string | undefined): string | undefined {
+  if (!pid) return undefined;
+  try {
+    // Read environ for BD_ACTOR or WAIF_AGENT
+    const envPath = `/proc/${pid}/environ`;
+    const data = readFileSync(envPath, 'utf8');
+    const parts = data.split('\0');
+    for (const p of parts) {
+      if (p.startsWith('BD_ACTOR=')) return p.split('=')[1];
+      if (p.startsWith('WAIF_AGENT=')) return p.split('=')[1];
+      if (p.startsWith('OPENCODE_AGENT=')) return p.split('=')[1];
+    }
+  } catch (e) {
+    // ignore (non-linux or permission)
+  }
+
+  try {
+    // Fallback: inspect cmdline for typical flags (e.g., --agent <name>, opencode --agent <name>, waif startWork --actor <name>)
+    const cmdPath = `/proc/${pid}/cmdline`;
+    const data = readFileSync(cmdPath, 'utf8');
+    if (data) {
+      const parts = data.split('\0').filter(Boolean);
+      for (let i = 0; i < parts.length; i += 1) {
+        const t = parts[i];
+        if ((t === '--agent' || t === '--actor' || t === '--opencode-agent') && parts[i + 1]) return parts[i + 1];
+        if (t === 'opencode' && parts[i + 1] === '--agent' && parts[i + 2]) return parts[i + 2];
+        if (t === 'waif' && parts[i + 1] === 'startWork' && parts[i + 2] === '--actor' && parts[i + 3]) return parts[i + 3];
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return undefined;
+}
+
 function listPanes(): ProbeSource {
   // Use window_name so the agent identity (window) is available rather than the numeric window_index
   const res = runCmd('tmux', ['list-panes', '-a', '-F', '#{session_name}:#{window_name}.#{pane_index}\t#{pane_title}\t#{pane_pid}']);
   if (res.status !== 0) return { rows: [], raw: res.stdout ?? '', error: res.stderr || res.stdout || 'tmux list-panes failed' };
+
+  // Load workflow agent definitions (best-effort)
+  let workflowAgents: Record<string, { name: string; label?: string; window?: string }> = {};
+  try {
+    const cfgPath = process.env.WORKFLOW_AGENTS_CONFIG || 'config/workflow_agents.yaml';
+    const txt = readFileSync(cfgPath, 'utf8');
+    const parsed: any = yaml.parse(txt) || {};
+    const list: any[] = Array.isArray(parsed?.agents) ? parsed.agents : [];
+    for (const a of list) {
+      if (a && a.name) workflowAgents[a.name] = { name: a.name, label: a.label, window: a.window };
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // Opencode agent map fallback
+  let agentMap: Record<string, string> = {};
+  try {
+    agentMap = loadAgentMap();
+  } catch (e) {
+    // ignore
+  }
+
   const rows = res.stdout
     .split(/\r?\n/)
     .filter(Boolean)
@@ -43,7 +107,26 @@ function listPanes(): ProbeSource {
       const [pane, title = '', pid = ''] = line.split('\t');
       const [sessionPart, windowPart] = (pane || '').split(':');
       const windowName = (windowPart || '').split('.')?.[0] || '';
-      return { pane, title, pid: pid && pid !== '-' && pid !== '-1' ? pid : undefined, session: sessionPart, window: windowName } as any;
+
+      // 1) Try process env/cmdline via /proc
+      const procAgent = getAgentFromProc(pid && pid !== '-' && pid !== '-1' ? pid : undefined);
+      if (procAgent) return { pane: procAgent, id: pane, title, pid: pid && pid !== '-' && pid !== '-1' ? pid : undefined, session: sessionPart, window: windowName } as any;
+
+      // 2) Match pane title against workflow agents (label or name)
+      const tLower = (title || '').toLowerCase();
+      for (const k of Object.keys(workflowAgents)) {
+        const a = workflowAgents[k];
+        if (a.label && tLower.startsWith(String(a.label).toLowerCase())) return { pane: a.name, id: pane, title, pid: pid && pid !== '-' && pid !== '-1' ? pid : undefined, session: sessionPart, window: windowName } as any;
+        if (String(a.name).toLowerCase() === tLower || tLower.startsWith(String(a.name).toLowerCase())) return { pane: a.name, id: pane, title, pid: pid && pid !== '-' && pid !== '-1' ? pid : undefined, session: sessionPart, window: windowName } as any;
+      }
+
+      // 3) If window maps to exactly one workflow agent, use it
+      const windowCandidates = Object.values(workflowAgents).filter((a) => a.window === windowName);
+      if (windowCandidates.length === 1) return { pane: windowCandidates[0].name, id: pane, title, pid: pid && pid !== '-' && pid !== '-1' ? pid : undefined, session: sessionPart, window: windowName } as any;
+
+      // 4) Fallback to opencode map by windowName or raw windowName
+      const mapped = agentMap[windowName] || windowName;
+      return { pane: mapped, id: pane, title, pid: pid && pid !== '-' && pid !== '-1' ? pid : undefined, session: sessionPart, window: windowName } as any;
     });
   return { rows, raw: res.stdout };
 }
