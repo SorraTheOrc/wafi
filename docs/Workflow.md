@@ -342,6 +342,12 @@ agents:
 
 - `WORKFLOW_AGENTS_CONFIG`: Path to an alternate config file (overrides default location)
 
+- Agent identity environment variables (set by scripts/start-workflow-tmux.sh): `BD_ACTOR`, `WAIF_AGENT`, and `OPENCODE_AGENT`. The tmux startup script exports these per-pane so that agent processes inherit a canonical agent identifier. Tools and probes (for example, the waif ooda probe) use the process environment (via /proc on Linux) to reliably determine which agent is running in a pane. This is more robust than relying on pane titles (which can be overwritten by terminal applications).
+
+Notes:
+- On Linux, tools can inspect /proc/<pid>/environ to read these vars. On non-Linux platforms or when permissions prevent reading /proc, probes fall back to window-based heuristics and pane titles.
+- Ensure start-workflow-tmux.sh or your pane launcher exports BD_ACTOR (and/or WAIF_AGENT / OPENCODE_AGENT) when spawning agent panes to make detection deterministic.
+
 ### Required Config
 
 The `config/workflow_agents.yaml` file is required. If it is missing, the script will error with instructions to create it. Use `node scripts/parse-workflow-config.js --defaults` to see an example config.
