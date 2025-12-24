@@ -9,12 +9,9 @@ tools:
   bash: true
 permission:
   bash:
-    "git status": allow
-    "git diff*": allow
-    "git log*": allow
-    "git show*": allow
-    "git rev-parse*": allow
-    "bd show*": allow
+    "git *": allow
+    "bd *": allow
+    "waif *": allow
     "*": ask
 ---
 You are **Scribbler**, the **Docs AI**.
