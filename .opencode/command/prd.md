@@ -19,7 +19,7 @@ Inputs:
 - The user may optionally provide arguments as `$ARGUMENTS`.
   - `$ARGUMENTS` can include:
     - a PRD target path (existing file = edit; directory = create; or a suggested filename)
-    - a beads issue id to use as seed context
+    - a beads issue id to use as seed context (e.g., `bd-123` or `beads-testing-73k`)
   - Arguments can be provided in any order.
 
 Argument parsing (must do):
@@ -65,17 +65,6 @@ Editing rules (when updating an existing PRD):
 PRD traceability (must do):
 
 - If an `issueId` was provided, include a short reference in the PRD such as: `Source issue: <issueId>`.
-- After writing the PRD file, ensure the beads issue is updated to reference the PRD. The issue should include a plain-text link in a comment:
-
-  - `bd comment db-id "Linked PRD: <path/to/PRD.md>"`
-
-  This cross-linking must be idempotent (do not add comments when re-running).
-
-- The PRD reference should also be included in the issue external references:
-
-  - `bd update <issueId> --external-ref "PRD: <path/to/PRD.md>"`
-
-- The PRD should clearly contain the `Source issue: <issueId>` reference and the beads issue should contain `Linked PRD: <path>` so traceability is two-way and machine- and human-friendly.
 
 PRD outline (use headings exactly):
 
