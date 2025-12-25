@@ -4,20 +4,24 @@ import { spawnSync } from 'child_process';
 import { Command } from 'commander';
 import { emitJson, logStdout } from '../lib/io.js';
 import { renderIssuesTable } from '../lib/table.js';
-import {
-  renderBlockersSection,
-  renderChildrenSection,
-  type IssueWithRelations,
-} from '../lib/relations.js';
 
-interface Issue extends IssueWithRelations {
+interface Issue {
   id: string;
+  title?: string;
   description?: string;
+  status?: string;
+  priority?: number;
   created_at?: string;
   updated_at?: string;
+  assignee?: string;
+  dependency_count?: number;
+  dependent_count?: number;
+  dependencies?: Array<{ type?: string; depends_on_id?: string }>;
+  [key: string]: unknown;
 }
 
 type IssuesSource = 'bd' | 'jsonl' | 'env';
+
 type LoadResult = { issues: Issue[]; source: IssuesSource };
 
 function runSpawn(cmd: string, args: string[], timeout = 30000): { stdout: string } {
@@ -65,75 +69,6 @@ function parseIssuesFromJsonl(path: string): Issue[] {
     .filter((v): v is Issue => Boolean(v));
 }
 
-function enrichIssuesWithDependencies(issues: Issue[], verbose: boolean): Issue[] {
-  if (!issues.length) return issues;
-
-  try {
-    const ids = issues.map((i) => i.id).filter(Boolean);
-    if (!ids.length) return issues;
-
-    const chunkSize = 40;
-    const hydrated = new Map<string, Issue>();
-
-    for (let idx = 0; idx < ids.length; idx += chunkSize) {
-      const chunk = ids.slice(idx, idx + chunkSize);
-      const out = runBd(['show', ...chunk, '--json']);
-      const parsed = JSON.parse(out);
-      const list = Array.isArray(parsed) ? (parsed as Issue[]) : [parsed as Issue];
-      for (const issue of list) {
-        if (issue?.id) hydrated.set(issue.id, issue);
-      }
-    }
-
-    return issues.map((issue) => {
-      const full = hydrated.get(issue.id);
-      return full ? { ...issue, ...full } : issue;
-    });
-  } catch (e) {
-    if (verbose) process.stderr.write(`[debug] bd show enrichment failed: ${(e as Error).message}\n`);
-    return issues;
-  }
-}
-
-function renderIssuesTableWithRelatedSections(issues: Issue[]): string {
-  const baseTable = renderIssuesTable(issues);
-  if (!baseTable) return '';
-
-  const lines = baseTable.split('\n');
-  if (lines.length <= 2) return baseTable;
-
-  const headerLines = lines.slice(0, 2);
-  const rowLines = lines.slice(2);
-  const sortedIssues = [...issues].sort((a, b) => a.id.localeCompare(b.id));
-
-  if (rowLines.length !== sortedIssues.length) {
-    // Fallback to original behavior to avoid mismatched output.
-    const fallbackSections = sortedIssues
-      .map((issue) => {
-        const sections = [issue.id];
-        const blockers = renderBlockersSection(issue);
-        if (blockers) sections.push(blockers);
-        const children = renderChildrenSection(issue);
-        if (children) sections.push(children);
-        return sections.join('\n');
-      })
-      .join('\n\n');
-    return `${baseTable}\n\n${fallbackSections}`;
-  }
-
-  const combined: string[] = [...headerLines];
-  for (let idx = 0; idx < sortedIssues.length; idx += 1) {
-    combined.push(rowLines[idx]);
-    const blockers = renderBlockersSection(sortedIssues[idx]);
-    if (blockers) combined.push(blockers);
-    const children = renderChildrenSection(sortedIssues[idx]);
-    if (children) combined.push(children);
-    combined.push('');
-  }
-
-  return combined.join('\n').trimEnd();
-}
-
 function loadInProgressIssues(verbose: boolean): LoadResult {
   const envJson = process.env.WAIF_IN_PROGRESS_JSON;
   if (envJson) {
@@ -150,10 +85,7 @@ function loadInProgressIssues(verbose: boolean): LoadResult {
     try {
       const out = runBd(['list', '--status', 'in_progress', '--json']);
       const parsed = JSON.parse(out);
-      if (Array.isArray(parsed)) {
-        const issues = enrichIssuesWithDependencies(parsed as Issue[], verbose);
-        return { issues, source: 'bd' };
-      }
+      if (Array.isArray(parsed)) return { issues: parsed as Issue[], source: 'bd' };
     } catch (e) {
       if (verbose) process.stderr.write(`[debug] bd list in_progress failed: ${(e as Error).message}\n`);
     }
@@ -182,7 +114,7 @@ export function createInProgressCommand() {
       const jsonOutput = Boolean(options.json ?? command.parent?.getOptionValue('json'));
       const verbose = Boolean(options.verbose ?? command.parent?.getOptionValue('verbose'));
 
-      const { issues } = loadInProgressIssues(verbose);
+      const { issues, source } = loadInProgressIssues(verbose);
 
       if (jsonOutput) {
         emitJson(issues);
@@ -196,7 +128,7 @@ export function createInProgressCommand() {
         return;
       }
 
-      logStdout(renderIssuesTableWithRelatedSections(issues));
+      logStdout(renderIssuesTable(issues));
     });
 
   return cmd;
