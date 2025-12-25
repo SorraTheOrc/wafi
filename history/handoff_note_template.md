@@ -5,7 +5,7 @@ Use this template when performing a handoff between agents or humans. Paste it i
 ---
 Handoff: [brief one-line summary]
 bd: bd-<id>
-Branch: <beads_prefix>-<id>/<short-desc>  # canonical branch for the bd issue (e.g., bd-123/short-desc). Check for an existing branch that starts with the beads prefix+id and reuse it if present.
+Branch: <origin/bd-123/short-desc>
 From: @<sender> (agent or person)
 To: @<receiver> (agent or person)
 Type: [soft|hard]

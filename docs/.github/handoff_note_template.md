@@ -5,8 +5,7 @@ This file is a visible copy of the canonical handoff template (also stored in hi
 ---
 Handoff: [brief one-line summary]
 bd: bd-<id>
-Branch: <beads_prefix>-<id>/<short-desc>  # canonical branch for the bd issue (e.g., bd-123/short-desc)
-(If parallel branches used) Sub-branch: <beads_prefix>-<id>/<patch|docs|ci>
+Branch: <origin/bd-123/short-desc>
 From: @<sender> (agent or person)
 To: @<receiver> (agent or person)
 Type: [soft|hard]
@@ -25,9 +24,9 @@ Files changed (paths)
 - path/to/file1
 - path/to/file2
 
-Risks / follow-ups
+Risks / TODOs
 - Risk 1 and mitigation
-- Remaining work or follow-ups (create bd issues; link discovered work via discovered-from)
+- Remaining work or follow-ups
 
 Ephemeral planning
 - history/<file> (if applicable)
@@ -35,7 +34,7 @@ Ephemeral planning
 Reviewer checklist (suggested)
 - Run X targeted tests
 - Manually verify Y
-- Confirm Z (e.g., build, packaging)
+- Confirm Z (e.g., accessibility, build, packaging)
 
 Delegated-to (optional)
 - delegated-to:@<owner> (scope)

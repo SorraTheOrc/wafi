@@ -1,55 +1,26 @@
-Permissions & enforcement matrix
+Permissions & enforcement matrix (draft)
 
 Purpose
 
-Provide an unambiguous mapping of agent/human roles to allowed Git operations, and the escalation path for exceptions.
+Provide a concise mapping of agent/human roles to allowed Git operations to reduce friction and ambiguity.
 
-Default rule
+Roles and allowed operations (summary)
 
-- Humans own publishing actions (push/merge/tag).
-- Agents can prepare changes locally and must ask (or be explicitly delegated) for publishing actions.
-- Branch protection on `main` is the enforcement mechanism; agent permissions are the operational guardrails.
+- Producer (human): push, merge, tag, create branches, force-push with Producer approval. Owner of final release decisions.
+- Ship (agent/human): recommend release readiness, may be delegated merge/tag authority for releases (explicit delegated-to:@ship required). Should not force-push without Producer approval.
+- Patch (agent/human): create branches, commit, request push/merge; ask before pushing shared branches or publishing.
+- Probe (agent): read-only; run tests and post findings in bd. Does not commit/push.
+- Forge (agent): modify .opencode/agent files; do not change runtime code/CI without Producer approval.
+- Map (agent): coordinate bd state and may create/update issues; not a default merge owner.
+- Scribbler / Muse / Pixel (agents): doc/design/asset tasks; avoid pushing release branches without Producer approval.
 
-Roles and allowed operations (typical)
+Delegation pattern
 
-Legend:
-- allow: normal operation
-- ask: must ask Producer (or delegated merge owner) before running
-- n/a: should not do this at all
+- Use bd comment for delegation: delegated-to:@<actor> (scope). Example: delegated-to:@ship for release validation.
+- When delegation includes merge authority, make it explicit in bd and name the merge owner.
 
-| Role | Create branch | Commit | Push | Merge to main | Tag release | Force-push | Notes |
-|---|---|---|---|---|---|---|---|
-| Producer (human) | allow | allow | allow | allow | allow | ask (self-approve only if safe) | Final release decisions |
-| Ship (DevOps) | allow | allow | ask | ask (unless delegated) | ask (unless delegated) | ask | Keep `main` releasable; validate CI/release readiness |
-| Patch (Implementation) | allow | allow | ask | n/a | n/a | ask | Can author changes; ask before publishing actions |
-| Probe (QA) | n/a | n/a | n/a | n/a | n/a | n/a | Runs tests and reports risk; no code changes |
-| Forge (Agent defs) | allow | allow | ask | n/a | n/a | ask | Edits `.opencode/agent/*`; avoid runtime/CI changes without approval |
-| Map (PM) | n/a | n/a | n/a | n/a | n/a | n/a | Coordinates in bd; avoids git state changes |
-| Scribbler / Muse / Pixel | allow | allow | ask | n/a | n/a | ask | Docs/design/assets; ask before publishing changes |
+Enforcement notes for admins
 
-Notes:
-- The authoritative, machine-enforced permissions are in `.opencode/agent/*.md`.
-
-Delegation pattern (bd)
-
-When a human wants an agent to perform a normally-restricted action, record it in bd:
-
-- `delegated-to:@ship (merge to main for bd-123)`
-- `delegated-to:@patch (push branch bd-123/patch)`
-
-Minimum delegation fields:
-- who (role/account), what (action), which branch/repo area, timebox (optional), and any required checks.
-
-Admin enforcement checklist
-
-- Use branch protection on `main`:
-  - require PR review(s)
-  - require status checks (tests, lint, build, and `pr/validate-title` once implemented)
-  - block force pushes
-  - restrict direct pushes
-- Optionally add CODEOWNERS for sensitive areas (e.g., `.github/`, `.opencode/`, `scripts/`).
-
-Related docs
-
-- Branch protection guidance: `docs/.github/branch_protection.md`
-- Workflow: `docs/dev/git_workflow.md`
+- Use branch protection to restrict who can push and require PRs for merging.
+- Add CODEOWNERS for directories where automatic reviewer suggestions help (optional).
+- Document exact enforcement steps in docs/.github/branch_protection.md
