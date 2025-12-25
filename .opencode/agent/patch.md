@@ -10,7 +10,6 @@ tools:
 permission:
   bash:
     "bd *": allow
-    "bd update *": allow
     "git *": allow
     "npm *": allow
     "rg": allow

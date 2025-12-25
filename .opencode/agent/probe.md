@@ -1,7 +1,7 @@
 ---
 description: Probe (QA AI) — quality gates, test strategy, and risk checks
 mode: primary
-model: github-copilot/gpt-5.2-codex-max
+model: github-copilot/gpt-5.1-codex-max
 temperature: 0.1
 tools:
   write: false
@@ -11,7 +11,6 @@ permission:
   bash:
     "git *": allow
     "bd *": allow
-    "bd update *": allow
     "waif *": allow
     "*": ask
 ---
