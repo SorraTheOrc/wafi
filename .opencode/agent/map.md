@@ -1,7 +1,8 @@
 ---
-description: Map (PM AI) — primary interface point for Producer
+description: Map (PM AI) — planning and coordination of the team for Producer
 mode: primary
-temperature: 0.2
+model: github-copilot/gpt-5-mini
+temperature: 0.3
 tools:
   write: true
   edit: true
