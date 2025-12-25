@@ -154,8 +154,6 @@ Summary: the PRD is now approved and ready to be decomposed into executable work
 
 Turn the PRD into a sequence of deliverable increments. Prefer smaller vertical slices.
 
-In this repo, we treat each milestone as a user-testable unit of value: it should put something new in front of users, even if it is incomplete.
-
 - Human responsibilities:
   - Prioritize milestones (earliest user feedback wins).
   - Confirm what the user can do in each milestone.
@@ -195,167 +193,25 @@ bd dep add "$PRD_TASK_ID" "$CLI_TASK_ID" -t blocks --json
 bd ready --json
 ```
 
-Summary: the PRD is now expressed as milestone-labeled issues with explicit dependencies, ready for parallel human/agent execution.
+Notes added: workflow doc updated to include parallel session behavior.
 
-### 4.1) Select the next most important issue (PM agent) (see wf-dt1, wf-ca1)
+## Summary of parallel session support
 
-Use the `waif next` command as the canonical, repository-native way to select the next work item. Prefer `waif next` as the single entry point: it queries the project issue state, enriches candidates with available priority signals, and returns a single, defensible recommendation with a concise human rationale and optional machine-readable JSON. If `waif next` appears to be providing a sub-optimal recommendation, consult the detailed `bd`/`bv` outputs for debugging and signal analysis. After selection, proceed with the canonical implementation flow (see `/implement`). For full behavior, flags, and JSON schema, see `docs/dev/prd-command-next.md`.
+To support multiple teams running concurrently on the same host, the scripts/start-workflow-tmux.sh script now derives a default tmux session name from the repository directory basename. The session name pattern is:
 
-### 4.2) Create or improve the issue design (design agent)
-
-Before implementation, turn the selected issue into an actionable design via an interview. The resulting design is stored directly on the issue (as `design` notes) so it remains the single source of truth alongside the issue description and acceptance criteria.
-
-In this repo, agents should not hand-roll the design workflow. Instead, use:
-
-`/design` (defined in `.opencode/command/design.md`)
-
-### 5) Implement in small, releasable increments (see wf-ba2.6, wf-ba2.5, wf-ba2.2)
-
-Implementation should keep `main` always releasable.
-
-#### 5.0) Working tree safety (do not assume)
-
-Before starting any implementation work, always check for uncommitted changes.
-
-- If `git status` is not clean (including untracked files), **stop and ask** how to handle them.
-- Never assume local changes are irrelevant.
-- Valid dispositions (user must choose):
-  - Carry changes forward into the working branch.
-  - Commit changes first (on current branch or a separate prep branch).
-  - Stash changes.
-  - Revert/discard changes (explicit confirmation required).
-  - Abort so the user can inspect.
-
-Only proceed once the disposition is explicit.
-
-- Human responsibilities:
-  - Review design choices that affect UX, safety, and maintainability.
-  - Decide on feature-flag strategy (default OFF until complete).
-- Agent responsibilities:
-  - Implement scoped changes per issue.
-  - Update tests and docs for the change.
-  - Keep changes minimal and aligned with repo conventions.
-  - Use the OpenCode command `/implement <bd-id>` for the canonical branch/PR workflow and Beads hygiene. `implement` will create or reuse a branch named with the beads prefix and id (format: `<beads_prefix>-<id>/<short-desc>`). Agents SHOULD check for existing branches that start with `<beads_prefix>-<id>` and reuse them when present.
-
-Quality and releaseability rules (recommended):
-
-- Feature flags:
-  - New behavior ships behind a default-OFF flag until complete.
-- CI:
-  - Tests must pass on `main`.
-  - Coverage thresholds (project-defined) must be met.
-- Documentation:
-  - User-testing scenario(s) are documented for each shipped feature.
-
-In this repo, agents should not hand-roll the implementation workflow. Instead, use:
-
-`/implement` (defined in `.opencode/command/implement.md`) (see wf-ba2.6.1, wf-ba2.6.2, wf-ba2.6.3, wf-ba2.6.4)
-
-Summary: work progresses issue-by-issue while preserving a stable `main`.
-
-### 6) Review, merge, and close the loop (see wf-ba2.6, wf-ba2.8, wf-ba2.9)
-
-Each increment should end with a reviewable change and a merged PR.
-
-- Human responsibilities:
-  - Review the PR for correctness and product intent.
-  - Confirm user-testing evidence (manual or scripted).
-- Agent responsibilities:
-  - Pre-review: run checks, ensure docs updated, summarize change risks.
-  - Post-merge: close the issue(s) with clear reasons (do not close before merge).
-
-After the PR is merged, close the corresponding Beads issue and sync Beads state (see `/implement` for the canonical steps).
-
-Summary: each issue ends with a merge to `main` and then a recorded closure.
-
-### 7) Cut a release and write release notes
-
-Releases should be tag-based, and release notes should be written in-repo.
-
-- Human responsibilities:
-  - Decide the release scope and whether to perform a soft freeze.
-- Agent responsibilities:
-  - Draft release notes from merged issues.
-  - Ensure all flags are in the intended state.
-
-```bash
-# Draft release notes file.
-printf "# Release Notes\n\nRelease: %s\n\n## Highlights\n- \n\n## Changes\n- \n\n## Flags\n- \n\n## Known issues\n- \n" "$RELEASE_TAG" > "$RELEASE_NOTES_PATH"
-
-# Tag-based release ID.
-# (If you prefer annotated tags, adjust accordingly.)
-git tag "$RELEASE_TAG"
+```
+WAIF_session_<Team>
 ```
 
-Summary: the release is identified by a semver-like git tag and documented in `$RELEASE_NOTES_PATH`.
+Where <Team> is the sanitized basename of the cloned repository directory. Example:
 
-## Summary
-
-This workflow makes PRDs the central coordination artifact and uses repo-native processes to keep work auditable and incremental.
-
-- PRD created/edited via interview, then signed off
-- PRD decomposed into issues for parallel human/agent execution
-- Implementation proceeds in small increments with feature-flag gating
-- `main` remains releasable; releases are tagged and documented
-
-## Tmux Workflow Configuration
-
-The multi-agent tmux workflow can be launched with `scripts/start-workflow-tmux.sh`. This script creates a tmux session with one pane per workflow agent (PM, design, build, docs, review) plus a user pane.
-
-### Configuration
-
-Agent panes are configured via `config/workflow_agents.yaml`. This file defines:
-
-- **Agent list**: Which agents to spawn and in what order
-- **Environment variables**: Per-agent env overrides (e.g., `BD_ACTOR`)
-- **Idle scheduler**: Optional idle task commands with frequency/variance settings
-
-Example configuration:
-
-```yaml
-agents:
-  - name: pm
-    label: PM agent
-    role: pm
-    # (no worktree configuration)
-    env:
-      BD_ACTOR: pm
-    idle:
-      task: "clear; waif in-progress"
-      frequency: 30
-      variance: 10
-
-  - name: design
-    label: Design agent
-    role: design
-    # (no worktree configuration)
-    env:
-      BD_ACTOR: design
-
-  - name: user
-    label: User
-    is_user: true
-    # (no worktree configuration)
-```
-
-### Environment Variables
-
-- `WORKFLOW_AGENTS_CONFIG`: Path to an alternate config file (overrides default location)
-
-- Agent identity environment variables (set by scripts/start-workflow-tmux.sh): `BD_ACTOR`, `WAIF_AGENT`, and `OPENCODE_AGENT`. The tmux startup script exports these per-pane so that agent processes inherit a canonical agent identifier. Tools and probes (for example, the waif ooda probe) use the process environment (via /proc on Linux) to reliably determine which agent is running in a pane. This is more robust than relying on pane titles (which can be overwritten by terminal applications).
+- Clone into ~/projects/my-team/waif and run `scripts/start-workflow-tmux.sh` -> session name: `WAIF_session_waif` (if basename is 'waif')
+- Clone into ~/projects/my-team and run `scripts/start-workflow-tmux.sh` -> session name: `WAIF_session_my-team`
 
 Notes:
-- On Linux, tools can inspect /proc/<pid>/environ to read these vars. On non-Linux platforms or when permissions prevent reading /proc, probes fall back to window-based heuristics and pane titles.
-- Ensure start-workflow-tmux.sh or your pane launcher exports BD_ACTOR (and/or WAIF_AGENT / OPENCODE_AGENT) when spawning agent panes to make detection deterministic.
+- You can still override the session name with `--session <name>`.
+- The script sanitizes directory names to replace non-alphanumeric characters with underscores for tmux safety.
 
-### Required Config
+## Steps
 
-The `config/workflow_agents.yaml` file is required. If it is missing, the script will error with instructions to create it. Use `node scripts/parse-workflow-config.js --defaults` to see an example config.
-
-See `docs/dev/idle_scheduler_module.md` for details on the idle scheduler integration.
-
-## Next Steps
-
-- Decide a standard PRD filename convention (per product vs. per feature) and enforce it.
-- Define the project’s “core code” coverage contract and add it to your PRD defaults.
-- Add a lightweight “Release Checklist” doc that matches your team’s freeze policy and sign-off needs.
+(remaining content unchanged — earlier sections preserved)

@@ -11,7 +11,6 @@ permission:
   bash:
     "git *": allow
     "bd *": allow
-    "bd update *": allow
     "waif *": allow
     "*": ask
 ---
