@@ -4,13 +4,56 @@ import { writeFileSync } from 'fs';
 import { execa } from 'execa';
 import { describe, expect, it } from 'vitest';
 
-const CLI = ['node', 'dist/index.js'];
+const CLI = [process.execPath, 'dist/index.js'];
 
 function makeIssues(path: string, issues: any[]) {
   writeFileSync(path, issues.map((i) => JSON.stringify(i)).join('\n') + '\n', 'utf8');
 }
 
 describe('waif next', () => {
+  it('prints in-progress table before recommendation', async () => {
+    const tmpIssues = join(tmpdir(), `issues-${Date.now()}-inprogress.jsonl`);
+    makeIssues(tmpIssues, [
+      { id: 'wf-1', title: 'First', status: 'open', priority: 2 },
+      { id: 'wf-2', title: 'Second', status: 'open', priority: 1 },
+    ]);
+
+    const inProgressPayload = JSON.stringify([
+      { id: 'wf-ip1', title: 'In progress one', status: 'in_progress', priority: 0, assignee: 'alice', dependency_count: 2 },
+    ]);
+
+    const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), 'next'], {
+      env: {
+        WAIF_ISSUES_PATH: tmpIssues,
+        WAIF_IN_PROGRESS_JSON: inProgressPayload,
+        PATH: '',
+      },
+    });
+
+    expect(exitCode).toBe(0);
+    const idxInProgress = stdout.indexOf('In Progress');
+    const idxRecommendation = stdout.indexOf('wf-2');
+    expect(idxInProgress).toBeGreaterThanOrEqual(0);
+    expect(idxRecommendation).toBeGreaterThan(idxInProgress);
+    expect(stdout).toContain('wf-ip1');
+  });
+
+  it('omits in-progress section when none exist', async () => {
+    const tmpIssues = join(tmpdir(), `issues-${Date.now()}-noinprogress.jsonl`);
+    makeIssues(tmpIssues, [{ id: 'wf-1', title: 'First', status: 'open', priority: 2 }]);
+
+    const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), 'next'], {
+      env: {
+        WAIF_ISSUES_PATH: tmpIssues,
+        WAIF_IN_PROGRESS_JSON: JSON.stringify([]),
+        PATH: '',
+      },
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout).not.toContain('In Progress');
+  });
+
   it('picks highest bv score when provided', async () => {
     const tmpIssues = join(tmpdir(), `issues-${Date.now()}.jsonl`);
     makeIssues(tmpIssues, [
@@ -29,6 +72,7 @@ describe('waif next', () => {
       env: {
         WAIF_ISSUES_PATH: tmpIssues,
         WAIF_BV_PRIORITY_JSON: bvPayload,
+        PATH: '',
       },
     });
 
@@ -47,7 +91,7 @@ describe('waif next', () => {
     ]);
 
     const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), 'next', '--json'], {
-      env: { WAIF_ISSUES_PATH: tmpIssues },
+      env: { WAIF_ISSUES_PATH: tmpIssues, PATH: '' },
     });
 
     expect(exitCode).toBe(0);
@@ -63,7 +107,7 @@ describe('waif next', () => {
     ]);
 
     const { exitCode, stderr } = await execa(CLI[0], [...CLI.slice(1), 'next'], {
-      env: { WAIF_ISSUES_PATH: tmpIssues },
+      env: { WAIF_ISSUES_PATH: tmpIssues, PATH: '' },
       reject: false,
     });
 

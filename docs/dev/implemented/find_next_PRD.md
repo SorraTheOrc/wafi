@@ -37,7 +37,8 @@
 * Functional requirements (MVP)
 
 1. `waif next` lists eligible candidates (open and unblocked) and returns the top-ranked issue.
-2. `waif next` prints human-readable output. When `bd` is available, the command prepends the short rationale and then includes the full `bd show <id>` output for human consumption. When `bd` is not available, the command falls back to a concise single-line summary: `<id>: <title> — <short rationale>`.
+2. `waif next` prints human-readable output. If any issues currently have status `in_progress`, the command prints an "In Progress" section containing a table (ID, Title, Priority, Blockers, Assignee) before the normal recommendation output.
+3. When `bd` is available, the command prepends the short rationale and then includes the full `bd show <id>` output for human consumption. When `bd` is not available, the command falls back to a concise single-line summary: `<id>: <title> — <short rationale>`.
 3. `waif next --json` prints a JSON object with full issue details plus computed score and ranking metadata.
 4. Ranking uses existing bv prioritization scores as the primary signal; tie-break deterministically by computed numeric score and, if equal, by `id` (lexicographic).
 5. CLI flags: `--json`, `--verbose` (debug logs).

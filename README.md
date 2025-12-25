@@ -39,7 +39,7 @@ When interacting with agents, the `waif` CLI tool is designed to integrate with 
 
 ## WAIF CLI Features
 
-- `waif next`: returns the top open, unblocked issue with a concise human rationale; supports `--json` output for automation.
+- `waif next`: returns the top open, unblocked issue with a concise human rationale; when any issues are `in_progress`, prints an "In Progress" table first; supports `--json` output for automation.
 - `waif --version` (alias: `-v`): prints the CLI version and exits.
 
 ## Install
