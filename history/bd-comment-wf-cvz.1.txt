@@ -1,5 +1,13 @@
-Spike draft artifacts added:
-- scripts/ooda_probe.sh (read-only tmux probe with Busy/Free heuristics, logging, sample mode)
-- history/ooda_probe_1766540000.txt (sample run)
-- history/ooda_heuristics.md (heuristics and interval/backoff defaults)
-- history/ooda_command_PRD.md (v0 lifecycle/UX draft)
+Session update: ran workspace triage and surface readiness.
+
+Commands executed: bd ready --json; bd show wf-2ia --json; grep 'wf-gn7' -R to locate related issues and artifacts.
+
+Findings: confirmed parent epic wf-gn7 and child issues wf-gn7.2.1..wf-gn7.2.7 exist (hook CLI, installer, priming utils, opt-in skills, MCP fallback, CI E2E, security/redaction).
+
+Files referenced/created: history/wf-gn7.claude-spike.md (exists), history/design-opencode-agent-integration-body.txt, .opencode/command/*, docs/dev/CLI_PRD.md, docs/Workflow.md. Temporary planning artifacts live under history/.
+
+Next steps recommended: draft PRD at docs/dev/opencode_integration_PRD.md; implement wf-gn7.2.1 (waif prime/opencode CLI); implement installer wf-gn7.2.2; add priming utilities wf-gn7.2.3; run security review wf-gn7.2.7; add CI E2E wf-gn7.2.6; then opt-in skills and MCP fallback.
+
+Remaining risks: potential secrets leakage in priming (need redaction); installer requiring sudo/system packages (decide policy); CI infra access for Linux runners.
+
+Please assign owners or confirm prioritization to proceed.
