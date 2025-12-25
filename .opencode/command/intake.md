@@ -38,7 +38,7 @@ Process (must follow):
 
 1. Interview (human-provided content)
 
-   In iterations (≤ 3 questions each), gather the following information (providing suggestions/examples where helpful):
+   In iterations (≤ 3 questions each), gather:
 
    - Problem (one paragraph)
      - What is the problem / opportunity?
@@ -108,21 +108,13 @@ Process (must follow):
    - If NEW: propose a PRD file path under `docs/dev/`.
      - Convention: `docs/dev/<feature>_PRD.md`.
 
-6. Feedback Gate
-
-  Propose the description of the bead, priority level, parent, related isses etc.
-
-  Ask the user if there are any clarifictions, changes or further research required before proceeding. Carry out any further instructtions before proceeding. 
-
-  Only proceed to the next step if the user gives permission to do so.
-
-7. Create or update the Beads issue (must do)
+6. Create or update the Beads issue (must do)
 
    Create a new Beads issue, or update an existing issue, so that the description contains the full intake brief and links.
 
    - Type: `feature`
    - Priority: default to `2` unless the user indicates urgency/risk.
-   - Title: `<descriptive working title>`
+   - Title: `<working title>: Intake brief`
 
    Use `bd create ... --json`.
 
@@ -142,45 +134,13 @@ Process (must follow):
      - `UPDATE PRD` at: `<path>`
      - Recommended next command: `/prd <path> <new-issue-id>`
 
-   Cross-linking (must do):
-
-   - If you are creating a new PRD as part of intake, ensure two-way traceability:
-
-     - The PRD file must include `Source issue: <new-issue-id>`.
-     - The newly-created beads issue must include a line `Linked PRD: <path/to/PRD.md>` in its description.
-
-   - Preferred mechanism: after creating the issue and writing the PRD, call the beads CLI to update the issue description with the PRD link. Example sequence:
-
-     1. `bd create "<title>" -t feature -p 2 --description "<full intake body>" --json` -> captures `id` in output
-     2. Write PRD to `<path>` with `Source issue: <id>` inside
-     3. `bd update <id> --body-file - < <path>` to append or include `Linked PRD: <path>` in the issue description
-
-   - If `bd` is unavailable, provide a deterministic fallback and explicit manual instructions to the user (e.g., edit `.beads/issues.jsonl` to add the `Linked PRD` line), and do not silently fail to leave the issue unlinked.
-
-   - The cross-link must be idempotent: re-running intake/prd with the same PRD path and issue id must not add duplicate `Linked PRD` lines.
-
    If there is a suitable parent issue then create the new issue as a sub-issue (use `--parent <id>`).
 
-   - Problem
-   - Users
-   - Success criteria
-   - Constraints
-   - Existing state (if applicable)
-   - Desired change (if applicable)
-   - Likely duplicates / related docs (file paths)
-   - Related issues (Beads ids)
-   - Clarifying questions
-   - Proposed next step:
-     - `NEW PRD` at: `<path>` OR
-     - `UPDATE PRD` at: `<path>`
-     - Recommended next command: `/prd <path> <new-issue-id>`
-
-   If there is a suitable parent issue then create the new issue as a sub-issue (use `--parent <id>`).
-
-8. Finish
+7. Finish
 
    After creating the issue, print:
 
    - The new Beads issue id
    - A 1–2 sentence summary
-   - Close the response with "This completes the Intake process for <dead-id>"
+   - The exact next command the user should run
+     - Example: `/prd docs/dev/<feature>_PRD.md <issue-id>`

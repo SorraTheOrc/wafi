@@ -55,7 +55,7 @@ Summary: after this section, the rest of the steps can be executed by copy/pasti
 
 Rule of Five policy: each major step below should be iterated 5 times before considering it complete (see wf-ba2.1).
 
-### 1) Start with an intake brief
+### 1) Start with an intake brief (see wf-ba2.1.1)
 
 The goal is to capture just enough context to decide whether you are creating something new or changing something that exists.
 
