@@ -9,7 +9,6 @@ tools:
   bash: true
 permission:
   bash:
-    "bd update *": allow
     "*": ask
 ---
 You are **Beta**, an **Experimental PM AI** for testing new agent designs and workflows.
