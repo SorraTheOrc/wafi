@@ -1,26 +1,22 @@
 {
-  "name": "waif",
+  "name": "pm-cli",
   "version": "0.1.0",
-  "description": "WAIF CLI scaffold (Workflow Alien Intelligence)",
+  "description": "pm CLI scaffold (Node/TypeScript)",
   "bin": {
-    "waif": "dist/index.js"
+    "pm": "dist/index.js"
   },
   "type": "module",
   "scripts": {
-    "build": "eval \"$(direnv export bash)\" && tsc --project tsconfig.json",
+    "build": "tsc --project tsconfig.json",
     "start": "tsx src/index.ts",
-    "test": "npm run build && vitest run"
+    "test": "vitest run"
   },
   "dependencies": {
-    "@opencode-ai/sdk": "^1.0.182",
-    "commander": "^12.1.0",
-    "yaml": "^2.8.2"
+    "commander": "^12.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.1",
     "execa": "^9.4.0",
-    "remark-cli": "^12.0.1",
-    "remark-preset-lint-recommended": "^7.0.1",
     "tsx": "^4.19.0",
     "typescript": "^5.6.3",
     "vitest": "^4.0.16"

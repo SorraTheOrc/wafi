@@ -1,9 +1,5 @@
-.npm-global/
 node_modules/
 dist/
-
-# (old worktree directories removed)
-
 # Python legacy scaffold (removed)
 src/pm/
 *.egg-info
