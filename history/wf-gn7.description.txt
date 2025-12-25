@@ -1,0 +1,7 @@
+OpenCode integration (wf-gn7)
+
+Canonical PRD: docs/dev/opencode_integration_PRD.md
+
+Session triage completed — see the PRD for full scope, acceptance criteria, and deliverables.
+
+Note: The PRD references the package manifest at config/waif_pacakges.yaml (preserves the preferred filename). Child issues wf-gn7.* remain present, open, and unassigned.

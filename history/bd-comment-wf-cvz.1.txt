@@ -1,5 +1,0 @@
-Spike draft artifacts added:
-- scripts/ooda_probe.sh (read-only tmux probe with Busy/Free heuristics, logging, sample mode)
-- history/ooda_probe_1766540000.txt (sample run)
-- history/ooda_heuristics.md (heuristics and interval/backoff defaults)
-- history/ooda_command_PRD.md (v0 lifecycle/UX draft)
