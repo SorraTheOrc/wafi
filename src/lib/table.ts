@@ -1,6 +1,7 @@
 export type IssueForTable = {
   id: string;
   title?: string;
+  status?: string;
   priority?: number;
   assignee?: string;
   dependency_count?: number;
@@ -38,10 +39,16 @@ type RenderIssuesTableOptions = {
     blockedRow: string;
     reset: string;
   };
+  sort?: 'id' | 'none';
+  showStatus?: boolean;
 };
 
 export function renderIssuesTable(issues: IssueForTable[], options: RenderIssuesTableOptions = {}): string {
   if (!issues.length) return '';
+
+  const sortMode = options.sort ?? 'id';
+
+  const showStatus = options.showStatus ?? false;
 
   const rows = issues
     .map((i) => {
@@ -50,19 +57,24 @@ export function renderIssuesTable(issues: IssueForTable[], options: RenderIssues
       return {
         id: i.id,
         title: i.title ?? '(no title)',
+        status: typeof i.status === 'string' ? i.status : '',
         priority: typeof i.priority === 'number' ? String(i.priority) : '',
         blockers: String(blockers),
         blocks: String(blocks),
         assignee: typeof i.assignee === 'string' ? i.assignee : '',
       };
-    })
-    .sort((a, b) => a.id.localeCompare(b.id));
+    });
+
+  if (sortMode === 'id') {
+    rows.sort((a, b) => a.id.localeCompare(b.id));
+  }
 
   const maxTitleWidth = 60;
 
   const headers = {
     id: 'ID',
     title: 'Title',
+    status: 'Status',
     priority: 'Priority',
     blockers: 'Blockers',
     blocks: 'Blocks',
@@ -75,6 +87,7 @@ export function renderIssuesTable(issues: IssueForTable[], options: RenderIssues
       maxTitleWidth,
       Math.max(headers.title.length, ...rows.map((r) => r.title.length)),
     ),
+    status: showStatus ? Math.max(headers.status.length, ...rows.map((r) => r.status.length)) : 0,
     priority: Math.max(headers.priority.length, ...rows.map((r) => r.priority.length)),
     blockers: Math.max(headers.blockers.length, ...rows.map((r) => r.blockers.length)),
     blocks: Math.max(headers.blocks.length, ...rows.map((r) => r.blocks.length)),
@@ -84,36 +97,43 @@ export function renderIssuesTable(issues: IssueForTable[], options: RenderIssues
   const dash = (w: number) => '-'.repeat(Math.max(3, w));
 
   const lines: string[] = [];
-  lines.push(
-    [
-      padRight(headers.id, widths.id),
-      padRight(headers.title, widths.title),
-      padRight(headers.priority, widths.priority),
-      padRight(headers.blockers, widths.blockers),
-      padRight(headers.blocks, widths.blocks),
-      padRight(headers.assignee, widths.assignee),
-    ].join('  '),
+  const headerCols = [
+    padRight(headers.id, widths.id),
+    padRight(headers.title, widths.title),
+  ];
+  if (showStatus) headerCols.push(padRight(headers.status, widths.status));
+  headerCols.push(
+    padRight(headers.priority, widths.priority),
+    padRight(headers.blockers, widths.blockers),
+    padRight(headers.blocks, widths.blocks),
+    padRight(headers.assignee, widths.assignee),
   );
-  lines.push(
-    [
-      dash(widths.id),
-      dash(widths.title),
-      dash(widths.priority),
-      dash(widths.blockers),
-      dash(widths.blocks),
-      dash(widths.assignee),
-    ].join('  '),
+  lines.push(headerCols.join('  '));
+
+  const dashCols = [dash(widths.id), dash(widths.title)];
+  if (showStatus) dashCols.push(dash(widths.status));
+  dashCols.push(
+    dash(widths.priority),
+    dash(widths.blockers),
+    dash(widths.blocks),
+    dash(widths.assignee),
   );
+  lines.push(dashCols.join('  '));
 
   for (const r of rows) {
-    const rawLine = [
+    const rowCols = [
       padRight(r.id, widths.id),
       padRight(truncate(r.title, widths.title), widths.title),
+    ];
+    if (showStatus) rowCols.push(padRight(r.status, widths.status));
+    rowCols.push(
       padRight(r.priority, widths.priority),
       padRight(r.blockers, widths.blockers),
       padRight(r.blocks, widths.blocks),
       padRight(r.assignee, widths.assignee),
-    ].join('  ');
+    );
+
+    const rawLine = rowCols.join('  ');
 
     const blockersNumber = Number(r.blockers);
     const color = options.color;

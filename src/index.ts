@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { createPrdCommand } from './commands/prd.js';
 import { createNextCommand } from './commands/next.js';
+import { createRecentCommand } from './commands/recent.js';
 import { handleError, logStdout } from './lib/io.js';
 import { getCliVersion } from './lib/version.js';
 
@@ -25,6 +26,7 @@ export async function run(argv = process.argv.slice(2)): Promise<number> {
 
   program.addCommand(createPrdCommand());
   program.addCommand(createNextCommand());
+  program.addCommand(createRecentCommand());
 
   try {
     await program.parseAsync(argv, { from: 'user' });

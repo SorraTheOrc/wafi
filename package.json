@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "start": "tsx src/index.ts",
-    "test": "vitest run"
+    "test": "npm run build && vitest run"
   },
   "dependencies": {
     "commander": "^12.1.0"

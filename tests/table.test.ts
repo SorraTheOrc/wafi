@@ -28,6 +28,7 @@ describe('renderIssuesTable', () => {
     expect(out).toContain('Blockers');
     expect(out).toContain('Blocks');
     expect(out).toContain('Assignee');
+    expect(out).not.toContain('Status');
 
     expect(out).toMatch(/wf-1/);
     expect(out).toMatch(/First/);
@@ -52,6 +53,20 @@ describe('renderIssuesTable', () => {
     expect(out).toContain('\u001b[31m');
     expect(out).toContain('wf-1');
     expect(out).toContain('\u001b[0m');
+  });
+
+  it('can optionally include status column', () => {
+    const out = renderIssuesTable(
+      [
+        { id: 'wf-1', title: 'First', status: 'open', priority: 2 },
+        { id: 'wf-2', title: 'Second', status: 'in_progress', priority: 1 },
+      ],
+      { showStatus: true, sort: 'none' },
+    );
+
+    expect(out).toContain('Status');
+    expect(out).toContain('open');
+    expect(out).toContain('in_progress');
   });
 
   it('returns empty string for empty input', () => {

@@ -166,7 +166,7 @@ export function createRecentCommand() {
 
       logStdout('# Recent Issues');
       logStdout('');
-      logStdout(renderIssuesTable(selected, { sort: 'none' }));
+      logStdout(renderIssuesTable(selected, { sort: 'none', showStatus: true }));
     });
 
   return cmd;
