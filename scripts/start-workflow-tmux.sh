@@ -30,7 +30,20 @@ Notes:
 EOF
 }
 
-SESSION="waif-workflow"
+# Default session name pattern: WAIF_session_<Team>
+# If the current working directory name looks like a team identifier, derive
+# a session name using the pattern 'WAIF_session_<Team>' so multiple teams can
+# run independent tmux sessions on the same host.
+# Default fallback remains 'waif-workflow' for backward compatibility.
+
+# Derive team name from the repo directory basename
+repo_dirname="$(basename "$repo_root")"
+
+# Sanitize repo_dirname to be tmux-session-safe (replace non-alnum with _)
+team_name="$(echo "$repo_dirname" | sed -E 's/[^A-Za-z0-9_\-]+/_/g')"
+
+SESSION="WAIF_session_${team_name}"
+
 RESTART=0
 
 while [[ $# -gt 0 ]]; do
