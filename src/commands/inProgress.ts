@@ -4,50 +4,20 @@ import { spawnSync } from 'child_process';
 import { Command } from 'commander';
 import { emitJson, logStdout } from '../lib/io.js';
 import { renderIssuesTable } from '../lib/table.js';
+import {
+  renderBlockersSection,
+  renderChildrenSection,
+  type IssueWithRelations,
+} from '../lib/relations.js';
 
-interface Issue {
+interface Issue extends IssueWithRelations {
   id: string;
-  title?: string;
   description?: string;
-  status?: string;
-  priority?: number;
   created_at?: string;
   updated_at?: string;
-  assignee?: string;
-  dependency_count?: number;
-  dependent_count?: number;
-  dependencies?: Array<{
-    id?: string;
-    title?: string;
-    status?: string;
-    dependency_type?: string;
-    type?: string;
-    depends_on_id?: string;
-    priority?: number;
-    assignee?: string;
-    dependency_count?: number;
-    dependent_count?: number;
-    dependencies?: Issue['dependencies'];
-  }>;
-  dependents?: Array<{
-    id?: string;
-    title?: string;
-    status?: string;
-    dependency_type?: string;
-    type?: string;
-    depends_on_id?: string;
-    priority?: number;
-    assignee?: string;
-    dependency_count?: number;
-    dependent_count?: number;
-    dependencies?: Issue['dependencies'];
-  }>;
-
-  [key: string]: unknown;
 }
 
 type IssuesSource = 'bd' | 'jsonl' | 'env';
-
 type LoadResult = { issues: Issue[]; source: IssuesSource };
 
 function runSpawn(cmd: string, args: string[], timeout = 30000): { stdout: string } {
@@ -125,6 +95,45 @@ function enrichIssuesWithDependencies(issues: Issue[], verbose: boolean): Issue[
   }
 }
 
+function renderIssuesTableWithRelatedSections(issues: Issue[]): string {
+  const baseTable = renderIssuesTable(issues);
+  if (!baseTable) return '';
+
+  const lines = baseTable.split('\n');
+  if (lines.length <= 2) return baseTable;
+
+  const headerLines = lines.slice(0, 2);
+  const rowLines = lines.slice(2);
+  const sortedIssues = [...issues].sort((a, b) => a.id.localeCompare(b.id));
+
+  if (rowLines.length !== sortedIssues.length) {
+    // Fallback to original behavior to avoid mismatched output.
+    const fallbackSections = sortedIssues
+      .map((issue) => {
+        const sections = [issue.id];
+        const blockers = renderBlockersSection(issue);
+        if (blockers) sections.push(blockers);
+        const children = renderChildrenSection(issue);
+        if (children) sections.push(children);
+        return sections.join('\n');
+      })
+      .join('\n\n');
+    return `${baseTable}\n\n${fallbackSections}`;
+  }
+
+  const combined: string[] = [...headerLines];
+  for (let idx = 0; idx < sortedIssues.length; idx += 1) {
+    combined.push(rowLines[idx]);
+    const blockers = renderBlockersSection(sortedIssues[idx]);
+    if (blockers) combined.push(blockers);
+    const children = renderChildrenSection(sortedIssues[idx]);
+    if (children) combined.push(children);
+    combined.push('');
+  }
+
+  return combined.join('\n').trimEnd();
+}
+
 function loadInProgressIssues(verbose: boolean): LoadResult {
   const envJson = process.env.WAIF_IN_PROGRESS_JSON;
   if (envJson) {
@@ -161,128 +170,6 @@ function loadInProgressIssues(verbose: boolean): LoadResult {
     }
     return { issues: [], source: 'jsonl' };
   }
-}
-
-const TERMINAL_STATUSES = new Set(['closed', 'done', 'tombstone']);
-
-function getBlockingDependencies(issue: Issue): Issue[] {
-  if (!issue?.dependencies || !Array.isArray(issue.dependencies)) return [];
-
-  const blockers: Issue[] = [];
-  for (const dep of issue.dependencies) {
-    if (!dep) continue;
-    const dependencyType = String(dep.dependency_type ?? dep.type ?? '').toLowerCase();
-    if (dependencyType !== 'blocks') continue;
-    const depId = dep.id || dep.depends_on_id;
-    if (!depId) continue;
-
-    const status = String(dep.status ?? '').toLowerCase();
-    if (status.length > 0 && TERMINAL_STATUSES.has(status)) continue;
-
-    blockers.push({
-      id: depId,
-      title: dep.title,
-      status: typeof dep.status === 'string' ? dep.status : undefined,
-      priority: typeof dep.priority === 'number' ? dep.priority : undefined,
-      assignee: typeof dep.assignee === 'string' ? dep.assignee : undefined,
-      dependency_count: typeof dep.dependency_count === 'number' ? dep.dependency_count : undefined,
-      dependent_count: typeof dep.dependent_count === 'number' ? dep.dependent_count : undefined,
-      dependencies: Array.isArray(dep.dependencies) ? (dep.dependencies as Issue['dependencies']) : undefined,
-    });
-  }
-  return blockers;
-}
-
-function renderBlockersForIssue(issue: Issue): string {
-  const blockers = getBlockingDependencies(issue);
-  if (!blockers.length) return '';
-
-  const rendered = renderIssuesTable(blockers, { sort: 'id' });
-  const indented = rendered
-    .split('\n')
-    .map((line) => `    ${line}`)
-    .join('\n');
-  return `  Blockers\n${indented}`;
-}
-
-
-
-
-
-
-
-function renderChildrenForIssue(issue: Issue): string {
-  const children = Array.isArray(issue.dependents)
-    ? issue.dependents
-        .filter((dep) => {
-          const relation = String(dep?.dependency_type ?? dep?.type ?? '').toLowerCase();
-          if (relation !== 'parent-child') return false;
-          const status = String(dep?.status ?? '').toLowerCase();
-          if (status.length > 0 && TERMINAL_STATUSES.has(status)) return false;
-          return true;
-        })
-        .map((dep) => ({
-          id: dep?.id ?? dep?.depends_on_id ?? '',
-          title: dep?.title,
-          status: typeof dep?.status === 'string' ? dep?.status : undefined,
-          priority: typeof dep?.priority === 'number' ? dep?.priority : undefined,
-          assignee: typeof dep?.assignee === 'string' ? dep?.assignee : undefined,
-          dependency_count: typeof dep?.dependency_count === 'number' ? dep?.dependency_count : undefined,
-          dependent_count: typeof dep?.dependent_count === 'number' ? dep?.dependent_count : undefined,
-          dependencies: Array.isArray(dep?.dependencies)
-            ? (dep?.dependencies as Issue['dependencies'])
-            : undefined,
-        }))
-        .filter((child) => Boolean(child.id))
-    : [];
-
-  if (!children.length) return '';
-
-  const rendered = renderIssuesTable(children as Issue[], { sort: 'id' });
-  const indented = rendered
-    .split('\n')
-    .map((line) => `    ${line}`)
-    .join('\n');
-  return `  Children\n${indented}`;
-}
-
-function renderIssuesTableWithRelatedSections(issues: Issue[]): string {
-  const baseTable = renderIssuesTable(issues);
-  if (!baseTable) return '';
-
-  const lines = baseTable.split('\n');
-  if (lines.length <= 2) return baseTable;
-
-  const headerLines = lines.slice(0, 2);
-  const rowLines = lines.slice(2);
-  const sortedIssues = [...issues].sort((a, b) => a.id.localeCompare(b.id));
-
-  if (rowLines.length !== sortedIssues.length) {
-    // Fallback to original behavior to avoid mismatched output.
-    const fallbackSections = sortedIssues
-      .map((issue) => {
-        const sections = [issue.id];
-        const blockers = renderBlockersForIssue(issue);
-        if (blockers) sections.push(blockers);
-        const children = renderChildrenForIssue(issue);
-        if (children) sections.push(children);
-        return sections.join('\n');
-      })
-      .join('\n\n');
-    return `${baseTable}\n\n${fallbackSections}`;
-  }
-
-  const combined: string[] = [...headerLines];
-  for (let idx = 0; idx < sortedIssues.length; idx += 1) {
-    combined.push(rowLines[idx]);
-    const blockers = renderBlockersForIssue(sortedIssues[idx]);
-    if (blockers) combined.push(blockers);
-    const children = renderChildrenForIssue(sortedIssues[idx]);
-    if (children) combined.push(children);
-    combined.push('');
-  }
-
-  return combined.join('\n').trimEnd();
 }
 
 export function createInProgressCommand() {
