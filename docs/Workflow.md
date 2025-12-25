@@ -165,6 +165,7 @@ Implementation should keep `main` always releasable.
   * Implement scoped changes per issue.
   * Update tests and docs for the change.
   * Keep changes minimal and aligned with repo conventions.
+  * Use the OpenCode command `/implement <bd-id>` for the canonical branch/PR workflow and Beads hygiene.
 
 Quality and releaseability rules (recommended):
 
@@ -176,38 +177,38 @@ Quality and releaseability rules (recommended):
 * Documentation:
   * User-testing scenario(s) are documented for each shipped feature.
 
+In this repo, agents should not hand-roll the implementation workflow. Instead, use:
+
 ```bash
-# Example: mark an issue in progress and sync issue metadata.
-# Replace ISSUE_ID with the actual beads issue id.
-export ISSUE_ID="bd-0"
-
-bd update "$ISSUE_ID" --status in_progress --json
-
-# Flush issue changes to the JSONL export.
-bd sync
+# In the OpenCode TUI:
+# /implement <bd-id>
+# Example:
+# /implement beads-testing-73k
 ```
+
+`/implement` is responsible for:
+- creating a working branch (no direct-to-main work)
+- pushing the branch to `origin`
+- opening/linking a PR
+- updating the Beads issue with PR references
+- keeping the Beads issue open until the PR is merged
 
 Summary: work progresses issue-by-issue while preserving a stable `main`.
 
 ### 6) Review, merge, and close the loop
 
-Each increment should end with a reviewable change and a closed issue.
+Each increment should end with a reviewable change and a merged PR.
 
 * Human responsibilities:
   * Review the PR for correctness and product intent.
   * Confirm user-testing evidence (manual or scripted).
 * Agent responsibilities:
   * Pre-review: run checks, ensure docs updated, summarize change risks.
-  * Post-merge: close the issue(s) with clear reasons.
+  * Post-merge: close the issue(s) with clear reasons (do not close before merge).
 
-```bash
-# Example: close issue and sync.
-# Replace ISSUE_ID and reason as appropriate.
-bd close "$ISSUE_ID" --reason "Done" --json
-bd sync
-```
+After the PR is merged, close the corresponding Beads issue and sync Beads state (see `/implement` for the canonical steps).
 
-Summary: each issue ends with a merge to `main` and a recorded closure.
+Summary: each issue ends with a merge to `main` and then a recorded closure.
 
 ### 7) Cut a release and write release notes
 
