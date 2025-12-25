@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "description": "WAIF CLI scaffold (Workflow Alien Intelligence)",
   "bin": {
-    "waif": "dist/index.js"
+    "waif": "dist/index.js",
+    "start-agent": "scripts/start-agent"
   },
   "type": "module",
   "scripts": {

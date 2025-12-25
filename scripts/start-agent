@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  start-agent NAME
+
+Bootstraps a per-agent workspace directory and initializes waif.
+
+Steps:
+  1) Sets BD_ACTOR to NAME
+  2) cd into ./$BD_ACTOR
+     - If missing, prompts for a git repo location and clones into ./$BD_ACTOR
+     - Creates/switches to branch "${BD_ACTOR}_Workspace"
+  3) Runs: waif init $BD_ACTOR
+EOF
+}
+
+if [[ ${1:-} == "-h" || ${1:-} == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ -z "${1:-}" ]]; then
+  echo "Missing NAME." >&2
+  usage >&2
+  exit 2
+fi
+
+export BD_ACTOR="$1"
+
+workspace_dir="./${BD_ACTOR}"
+
+if [[ ! -d "$workspace_dir" ]]; then
+  echo "Workspace directory not found: $workspace_dir" >&2
+  read -r -p "Enter git repo URL/path to clone into $workspace_dir: " repo
+  if [[ -z "${repo:-}" ]]; then
+    echo "No repo provided; aborting." >&2
+    exit 1
+  fi
+
+  if ! command -v git >/dev/null 2>&1; then
+    echo "git is required but was not found in PATH." >&2
+    exit 1
+  fi
+
+  git clone "$repo" "$workspace_dir"
+fi
+
+cd "$workspace_dir"
+
+if ! command -v git >/dev/null 2>&1; then
+  echo "git is required but was not found in PATH." >&2
+  exit 1
+fi
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "Directory is not a git repo: $(pwd)" >&2
+  exit 1
+fi
+
+branch="${BD_ACTOR}_Workspace"
+
+# Create or switch to the branch.
+if git show-ref --verify --quiet "refs/heads/$branch"; then
+  git switch "$branch"
+else
+  git switch -c "$branch"
+fi
+
+# Run waif init (prefer global waif; fall back to local node_modules bin).
+if command -v waif >/dev/null 2>&1; then
+  waif init "$BD_ACTOR"
+elif [[ -x "./node_modules/.bin/waif" ]]; then
+  ./node_modules/.bin/waif init "$BD_ACTOR"
+else
+  echo "waif was not found (global or ./node_modules/.bin/waif)." >&2
+  echo "From the repo root, run: npm install && npm run build" >&2
+  exit 1
+fi
