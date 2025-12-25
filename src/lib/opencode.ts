@@ -74,18 +74,15 @@ export async function ensureClient(): Promise<any | undefined> {
   // Read config
   const cfg = readYaml(resolve('.opencode/server.yaml')) || {};
   const serverCfg = cfg.server || {};
-  const host = process.env.OPENCODE_HOST || serverCfg.host || '127.0.0.1';
+  const host = process.env.OPENCODE_HOST || serverCfg.host || 'localhost';
   const port = Number(process.env.OPENCODE_PORT || serverCfg.port || 4096);
-  const defaultAgent = process.env.OPENCODE_DEFAULT_AGENT || serverCfg.defaultAgent || 'map';
-  const defaultProvider = process.env.OPENCODE_PROVIDER || serverCfg.provider || 'github-copilot';
-  const defaultModel = process.env.OPENCODE_MODEL || serverCfg.model || 'gpt-5-mini';
 
   const running = await checkPort(host, port, 300);
 
   try {
     const mod = await import('@opencode-ai/sdk');
-    const createOpencode = mod?.createOpencode ?? mod?.default?.createOpencode;
-    const createOpencodeClient = mod?.createOpencodeClient ?? mod?.default?.createOpencodeClient;
+    const createOpencode = mod?.createOpencode ?? mod?.default?.createOpencode ?? mod?.createOpencodeClient;
+    const createOpencodeClient = mod?.createOpencodeClient ?? mod?.createOpencodeClient;
 
     let sdkClient: any | undefined;
 
@@ -94,12 +91,15 @@ export async function ensureClient(): Promise<any | undefined> {
       if (typeof createOpencode === 'function') {
         const timeoutMs = Number(process.env.OPENCODE_STARTUP_TIMEOUT || 5000);
         const inst = await createOpencode({ hostname: host, port, timeout: timeoutMs });
-        sdkClient = inst?.client ?? inst;
+        sdkClient = inst?.client ?? inst?.client ?? inst;
       }
     } else {
       // connect to existing server as client only
       if (typeof createOpencodeClient === 'function') {
         sdkClient = await createOpencodeClient({ baseUrl: `http://${host}:${port}` });
+      } else if (typeof createOpencode === 'function') {
+        const inst = await createOpencode({ hostname: host, port, timeout: 0 });
+        sdkClient = inst?.client ?? inst;
       }
     }
 
@@ -110,8 +110,7 @@ export async function ensureClient(): Promise<any | undefined> {
     // attempt to list agents and write cache
     try {
       if (sdkClient.app && typeof sdkClient.app.agents === 'function') {
-        const agentsRes = await sdkClient.app.agents();
-        const agents = Array.isArray(agentsRes?.data) ? agentsRes.data : agentsRes;
+        const agents = await sdkClient.app.agents();
         if (Array.isArray(agents)) {
           const outLines: string[] = [];
           for (const a of agents) {
@@ -134,60 +133,41 @@ export async function ensureClient(): Promise<any | undefined> {
 
     client = {
       ask: async (agent: string, prompt: string) => {
-        // Map agent name -> id with fallbacks
+        // Map agent name -> id
         const map = loadAgentMap();
-        const requested = agent || defaultAgent;
-        const mapped = map[requested] || requested || defaultAgent;
+        const mapped = map[agent] || agent;
 
-        // Preferred path: start a session and send a prompt
-        if (sdkClient.session && typeof sdkClient.session.create === 'function' && typeof sdkClient.session.prompt === 'function') {
-          const session = await sdkClient.session.create({});
-          const sessionID = session?.data?.id || session?.id;
-          if (!sessionID) throw new Error('Failed to create OpenCode session');
-
-          const res = await sdkClient.session.prompt({
-            path: { id: sessionID },
-            body: {
-              agent: mapped,
-              model: { providerID: defaultProvider, modelID: defaultModel },
-              parts: [{ type: 'text', text: prompt }],
-            },
-          });
-
-          // Try to read assistant text from the created message
-          const message = res?.data?.info;
-          const parts = res?.data?.parts;
-          const textPart = Array.isArray(parts) ? parts.find((p: any) => p?.type === 'text') : undefined;
-          if (textPart?.text) return { markdown: String(textPart.text) };
-
-          if (typeof message?.content === 'string') return { markdown: message.content };
-
-          if (message?.error?.data?.message) {
-            return { markdown: `OpenCode error: ${message.error.data.message}` };
-          }
-
-          // Fallback: fetch messages for the session and pick last assistant text part
-          try {
-            const msgs = await sdkClient.session.messages({ path: { id: sessionID }, query: { limit: 5 } });
-            const list = Array.isArray(msgs?.data) ? msgs.data : [];
-            for (let i = list.length - 1; i >= 0; i -= 1) {
-              const m = list[i];
-              if (m?.info?.role === 'assistant' && Array.isArray(m?.parts)) {
-                const tp = m.parts.find((p: any) => p?.type === 'text' && p?.text);
-                if (tp) return { markdown: String(tp.text) };
-              }
+        // Prefer session-based prompt
+        try {
+          if (sdkClient.session && typeof sdkClient.session.create === 'function') {
+            const session = await sdkClient.session.create({ body: { title: `waif ask (${mapped})` } });
+            const res = await sdkClient.session.prompt({ path: { id: session.id }, body: { parts: [{ type: 'text', text: prompt }] } });
+            // Attempt to extract assistant parts text
+            const parts = (res?.parts) || (res?.info?.parts) || res?.parts || [];
+            const texts: string[] = [];
+            for (const p of parts) {
+              if (typeof p === 'string') texts.push(p);
+              else if (p?.type === 'text' && typeof p?.text === 'string') texts.push(p.text);
+              else if (p?.content && typeof p.content === 'string') texts.push(p.content);
             }
-          } catch (e) {
-            // ignore fetch errors
+            const joined = texts.join('\n\n') || JSON.stringify(res);
+            return { markdown: joined };
           }
-
-          return { markdown: JSON.stringify(res ?? {}) };
+        } catch (e) {
+          // continue to other methods
         }
+
+        // Fallback: try client.app.prompt or client.session.command
+        try {
+          if (sdkClient.app && typeof sdkClient.app.prompt === 'function') {
+            const out = await sdkClient.app.prompt({ body: { text: prompt } });
+            return { markdown: out?.text ?? String(out) };
+          }
+        } catch (e) {}
 
         throw new Error('OpenCode client has no supported ask method');
       },
       _sdk: sdkClient,
-      _defaultAgent: defaultAgent,
     };
 
     // ensure agent_map exists (create empty cache if missing)
