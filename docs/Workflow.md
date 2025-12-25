@@ -197,7 +197,7 @@ Summary: the PRD is now expressed as milestone-labeled issues with explicit depe
 
 ### 4.1) Select the next most important issue (PM agent) (see wf-dt1, wf-ca1)
 
-Use the `waif next` command as the canonical, repository-native way to select the next work item. Prefer `waif next` as the single entry point: it queries the project issue state, enriches candidates with available priority signals, and returns a single, defensible recommendation with a concise human rationale and optional machine-readable JSON. If `waif next` appears to be providing a sub-optimal recommendation, consult the detailed `bd`/`bv` outputs for debugging and signal analysis. After selection, proceed with the canonical implementation flow (see `/implement`). For full behavior, flags, and JSON schema, see `docs/dev/find_next_PRD.md`.
+Use the `waif next` command as the canonical, repository-native way to select the next work item. Prefer `waif next` as the single entry point: it queries the project issue state, enriches candidates with available priority signals, and returns a single, defensible recommendation with a concise human rationale and optional machine-readable JSON. If `waif next` appears to be providing a sub-optimal recommendation, consult the detailed `bd`/`bv` outputs for debugging and signal analysis. After selection, proceed with the canonical implementation flow (see `/implement`). For full behavior, flags, and JSON schema, see `docs/dev/prd-command-next.md`.
 
 ### 4.2) Create or improve the issue design (design agent)
 
