@@ -13,6 +13,7 @@ permission:
     "bd *": allow
     "waif *": allow
     "rg *": allow
+    "bd update *": allow
     "*": ask
 ---
 You are **Map**, the **PM AI** and primary coordination agent for the Producer.

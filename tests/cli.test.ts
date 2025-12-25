@@ -10,13 +10,14 @@ function tmpFile(name: string) {
   return join(tmpdir(), name);
 }
 
-test('waif --help shows prd/next/recent/in-progress', async () => {
+test('waif --help shows prd/next/recent/in-progress/show', async () => {
   const { exitCode, stdout } = await execa(CLI[0], [...CLI.slice(1), '--help']);
   expect(exitCode).toBe(0);
   expect(stdout).toContain('prd');
   expect(stdout).toContain('next');
   expect(stdout).toContain('recent');
   expect(stdout).toContain('in-progress');
+  expect(stdout).toContain('show');
 });
 
 test('waif --version prints release semver in release mode', async () => {

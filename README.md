@@ -54,7 +54,22 @@ When interacting with agents, the `waif` CLI tool is designed to integrate with 
 
 ## WAIF CLI Features
 
-- `waif next`: prints a one-row recommendation table followed by `# Details` (full `bd show <id>` output when available), copies the recommended issue id to your clipboard (best-effort), and supports `--json` output for automation.
+- `waif in-progress`: lists issues currently marked `in_progress` (use this to see what you or agents are actively working on).
+- `waif recent [-n 3]`: lists the most recently updated issues (use this to regain context).
+- `waif next`: recommends the single best open, unblocked issue to work on now, copies the issue id to your clipboard (best-effort), and supports `--json` output for automation. It prints a one-row recommendation table followed by `# Details` (full `bd show <id>` output when available). For a table-formatted view with blockers/children, use `waif show <id>`.
+- `waif show <id>`: drill into a specific issue (e.g., after you get an id from `waif in-progress`, `waif recent`, or `waif next`).
+
+  Usage:
+  - `waif show <id>`
+  - `waif show <id> --json`
+
+  Output:
+  - Main issue as a one-row table.
+  - Optional indented sections:
+    - `Blockers`: blocking dependencies (type `blocks`) that are not in a terminal status.
+    - `Children`: child issues (type `parent-child`) that are not in a terminal status.
+
+  JSON behavior: `waif show <id> --json` (or global `waif --json show <id>`) emits the raw issue object from `bd show --json`.
 - `waif --version` (alias: `-v`): prints the CLI version and exits.
 - `waif ask [prompt] [--agent <name>] [--json]`: one-shot ask that integrates with OpenCode; defaults to agent `map`, provider `github-copilot`, model `gpt-5-mini`, host `127.0.0.1`, port `4096`. Env overrides: `OPENCODE_ENABLED`, `OPENCODE_HOST`, `OPENCODE_PORT`, `OPENCODE_DEFAULT_AGENT`, `OPENCODE_PROVIDER`, `OPENCODE_MODEL`. If no `--agent` is provided and the first word of the prompt matches a key in `.opencode/agent_map.yaml`, that word is used as the agent and removed from the prompt.
 
