@@ -9,8 +9,10 @@ tools:
   bash: true
 permission:
   bash:
-    "git *": allow
     "bd *": allow
+    "bd update *": allow
+    "git *": allow
+    "npm *": allow
     "rg": allow
     "waif *": allow
     "*": ask
