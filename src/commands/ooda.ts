@@ -264,7 +264,7 @@ export function createOodaCommand(
     .option('--log <path>', 'Log path (tmux probe) or OpenCode event log')
     .option('--no-log', 'Disable logging')
     .option('--sample', 'Use built-in sample data (no tmux)')
-    .option('--probe', 'Use legacy tmux probe instead of OpenCode events')
+    .option('--probe', 'Use tmux probe instead of OpenCode events')
     .option('--opencode', 'Subscribe to OpenCode agent events')
     .option('--opencode-sample', 'Use sample OpenCode events (no server)')
     .action(async (options, command) => {
@@ -272,17 +272,15 @@ export function createOodaCommand(
       const interval = Number(options.interval ?? 5) || 5;
       const logEnabled = options.log !== false;
       const once = Boolean(options.once);
-      const probeMode = Boolean(options.probe);
-      const opencodeSample = Boolean(options.sample || options.opencodeSample);
-      const shouldUseOpencode = !probeMode && (Boolean(options.opencode) || opencodeSample || opencodeEnabled());
+      const opencodePreferred = opencodeEnabled() && !options.probe;
 
-      if (shouldUseOpencode) {
-        const opencodeLogPath = logEnabled ? options.log || DEFAULT_OPENCODE_LOG : undefined;
-        await runOpencode({ sample: opencodeSample, once, logPath: opencodeLogPath, log: logEnabled });
-        if (!once && !opencodeSample) {
-          // keep process alive while subscribed
-          await new Promise(() => {});
+      if (opencodePreferred) {
+        const logPathForIngestor = options.log || DEFAULT_OPENCODE_LOG;
+        if (once) {
+          await runOpencode({ once: true, sample: Boolean(options.sample), logPath: logPathForIngestor });
+          return;
         }
+        await runOpencode({ once: false, sample: Boolean(options.sample), logPath: logPathForIngestor });
         return;
       }
 
