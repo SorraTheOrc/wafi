@@ -153,15 +153,23 @@ export async function runIngester(options: IngesterOptions = {}) {
     // log debug so users know we're waiting for events
     try { process.stderr.write('[debug] ooda-ingester: subscribed and awaiting events (CTRL-C to exit)\n'); } catch (e) {}
 
-    // Wait until process receives termination signal or unsubscribe is called elsewhere.
+    // Keep Node's event loop alive using stdin resume so the process doesn't exit
+    // immediately when there are no other active handles. This provides a simple
+    // foreground keep-alive until the process is terminated.
+    try { if (process.stdin && typeof process.stdin.resume === 'function') process.stdin.resume(); } catch (e) {}
+
     await new Promise<void>((resolve) => {
       const cleanup = () => {
         try { unsubscribe && unsubscribe(); } catch (e) {}
+        try { if (process.stdin && typeof process.stdin.pause === 'function') process.stdin.pause(); } catch (e) {}
+        // remove handlers to avoid leaks
+        process.off('SIGINT', cleanup);
+        process.off('SIGTERM', cleanup);
         resolve();
       };
       process.on('SIGINT', cleanup);
       process.on('SIGTERM', cleanup);
-      // no-op: keep promise pending until signal triggers cleanup
+      // promise remains pending until a signal triggers cleanup
     });
 
     return undefined;
