@@ -1,0 +1,22 @@
+Patch reported partial progress on wf-r1d (OODA monitor uses OpenCode events to track agent status).
+
+Summary of patch report (partial work):
+- Executed: bd update wf-r1d --status in_progress --assignee patch
+- Files touched so far:
+  - src/lib/opencode.ts  (OpenCode event helpers: formatting, logging, subscription scaffolding)
+  - src/commands/ooda.ts (started; wiring not finished)
+
+Work remaining (blocking completion):
+1) Finish wiring src/commands/ooda.ts to consume the new OpenCode helpers and implement --log <path> flag (default: .waif/opencode_events.jsonl).
+2) Add unit and integration tests that mock OpenCode event shapes and assert console output and log file writes.
+3) Resolve vitest invocation issues and run the full test suite locally (npm test).
+4) Create branch feature/wf-r1d-ooda-ingester, open a PR with required PR body, and post PR URL to the bead (bd comment wf-r1d "PR: <url>").
+
+Patch notes / blockers:
+- Test runs failed due to vitest CLI option mismatch; patch stopped to avoid churn. Recommend confirming test command (npm test invocation) and whether to run full suite or a focused test target.
+
+Suggested next steps for Patch (if allowed to proceed):
+- Complete wiring and tests, run `npm test`, open PR, then bd comment with PR URL.
+- If Patch needs confirmation on event names/schema, post a short clarification here; otherwise proceed with agent.started, agent.stopped, and message.returned (or closest equivalents from SDK).
+
+Recorded at: 2025-12-27T01:xx:xxZ

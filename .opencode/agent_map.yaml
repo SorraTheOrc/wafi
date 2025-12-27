@@ -5,6 +5,7 @@ explore: explore
 compaction: compaction
 title: title
 summary: summary
+beta: beta
 map: map
 scribbler: scribbler
 probe: probe
