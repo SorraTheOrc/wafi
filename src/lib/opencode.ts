@@ -246,7 +246,7 @@ export function loadAgentMap(): Record<string, string> {
 export async function subscribeToOpencodeEvents(
   eventTypes: string[],
   handler: (event: OpencodeEvent) => void,
-  options?: { source?: OpencodeEventSource },
+  options?: { source?: OpencodeEventSource; debug?: boolean },
 ): Promise<{ unsubscribe: () => void }> {
   let source = options?.source;
   if (!source) {
@@ -258,9 +258,44 @@ export async function subscribeToOpencodeEvents(
     throw new Error('OpenCode SDK event.subscribe API is required for ingestion');
   }
 
+  const REDACT_KEYS = ['token', 'password', 'secret', 'pem', 'key'];
+  function redact(value: any): any {
+    if (Array.isArray(value)) return value.map((v) => redact(v));
+    if (value && typeof value === 'object') {
+      const out: any = {};
+      for (const [k, v] of Object.entries(value)) {
+        const lower = String(k).toLowerCase();
+        if (REDACT_KEYS.some((rk) => lower.includes(rk))) {
+          out[k] = '[REDACTED]';
+          continue;
+        }
+        out[k] = redact(v);
+      }
+      return out;
+    }
+    return value;
+  }
+
   const subRes = await source.subscribe({ filter: { type: eventTypes } }, (payload: any) => {
     const type = payload?.type || 'unknown';
     const body = payload && typeof payload === 'object' && 'payload' in payload ? (payload as any).payload : payload;
+
+    const debugOn = Boolean(options?.debug || process.env.OPENCODE_DEBUG);
+    if (debugOn) {
+      try {
+        const redacted = redact(body);
+        // Log to stderr to avoid mixing with normal stdout output
+        try {
+          process.stderr.write('[debug] opencode raw event: ' + JSON.stringify({ type: payload?.type, payload: redacted }) + '\n');
+        } catch (e) {
+          // fallback to console.error if write fails
+          try { console.error('[debug] opencode raw event:', JSON.stringify({ type: payload?.type, payload: redacted })); } catch (err) {}
+        }
+      } catch (e) {
+        // do not let debug logging break ingestion
+      }
+    }
+
     handler(normalizeOpencodeEvent({ type, payload: body, ts: new Date().toISOString() }));
   });
 
