@@ -100,6 +100,7 @@ export interface IngesterOptions {
   logPath?: string;
   events?: string[];
   log?: boolean;
+  debug?: boolean;
 }
 
 export async function runIngester(options: IngesterOptions = {}) {

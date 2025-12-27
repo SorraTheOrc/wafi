@@ -267,6 +267,7 @@ export function createOodaCommand(
     .option('--opencode', 'Subscribe to OpenCode agent events')
     .option('--opencode-sample', 'Use sample OpenCode events (no server)')
     .option('--mock <path>', 'Use mock NDJSON events file for OpenCode')
+    .option('--opencode-debug', 'Log redacted raw OpenCode events to stderr (alias: --verbose)')
     .action(async (options, command) => {
       const jsonOutput = Boolean(options.json ?? command.parent?.getOptionValue('json'));
       const interval = Number(options.interval ?? 5) || 5;
@@ -274,14 +275,17 @@ export function createOodaCommand(
       const once = Boolean(options.once);
       const opencodePreferred = opencodeEnabled() && !options.probe;
 
-      if (opencodePreferred) {
-        const logPathForIngestor = options.log || OODA_STATUS_LOG;
-        await runOpencode({
-          once,
-          logPath: logPathForIngestor,
-        });
-        return;
-      }
+        if (opencodePreferred) {
+          const logPathForIngestor = options.log || OODA_STATUS_LOG;
+          const debug = Boolean(options.opencodeDebug || options.verbose || command.parent?.getOptionValue('verbose'));
+          await runOpencode({
+            once,
+            logPath: logPathForIngestor,
+            debug,
+          });
+          return;
+        }
+
 
       const useSampleProbe = Boolean(options.sample);
       const logPath = logEnabled ? options.log || `history/ooda_probe_${Math.floor(Date.now() / 1000)}.txt` : undefined;
