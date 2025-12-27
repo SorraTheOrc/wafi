@@ -181,8 +181,11 @@ export async function subscribeToOpencodeEvents(
   handler: (event: OpencodeEvent) => void,
   options?: { source?: OpencodeEventSource },
 ): Promise<{ unsubscribe: () => void }> {
-  const clientObj = await ensureClient();
-  const source = options?.source ?? clientObj?._sdk?.event ?? clientObj?._sdk?.events ?? clientObj?.event ?? clientObj?.events;
+  let source = options?.source;
+  if (!source) {
+    const clientObj = await ensureClient();
+    source = clientObj?._sdk?.event ?? clientObj?._sdk?.events ?? clientObj?.event ?? clientObj?.events;
+  }
 
   if (!source || typeof source.subscribe !== 'function') {
     throw new Error('OpenCode SDK event.subscribe API is required for ingestion');
@@ -190,7 +193,8 @@ export async function subscribeToOpencodeEvents(
 
   const subRes = await source.subscribe({ filter: { type: eventTypes } }, (payload: any) => {
     const type = payload?.type || 'unknown';
-    handler({ type, payload, ts: new Date().toISOString() });
+    const body = payload && typeof payload === 'object' && 'payload' in payload ? (payload as any).payload : payload;
+    handler({ type, payload: body, ts: new Date().toISOString() });
   });
 
   let unsubCalled = false;

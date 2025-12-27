@@ -108,6 +108,7 @@ export async function runIngester(options: IngesterOptions = {}) {
   const targetLog = logPath || OODA_STATUS_LOG;
   const shouldLog = log !== false;
 
+  let wroteFirst = false;
   const handleEvent = (ev: any) => {
     const mapped = mapToInternalEvent(ev);
     if (shouldLog) {
@@ -115,13 +116,14 @@ export async function runIngester(options: IngesterOptions = {}) {
     } else {
       logStdout(stableStringify(mapped));
     }
+    wroteFirst = true;
   };
 
   const subscription = await subscribeToOpencodeEvents(
     events,
     (ev) => {
       handleEvent(ev);
-      if (once) {
+      if (once && wroteFirst) {
         try {
           subscription?.unsubscribe();
         } catch (e) {
