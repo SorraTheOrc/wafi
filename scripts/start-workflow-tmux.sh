@@ -591,7 +591,8 @@ fi
 
 if (( should_create == 1 )); then
   echo "Creating new tmux session: $SESSION" >&2
-  tmux new-session -d -s "$SESSION" -n "temp" -c "$repo_root" || {
+  tmux new-session -d -s "$SESSION" -n "temp" -c "$repo_root"\; \
+  source-file ./config/tmux.conf || {
     echo "Error: Failed to create tmux session" >&2
     exit 1
   }
