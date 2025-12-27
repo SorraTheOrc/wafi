@@ -338,13 +338,13 @@ export async function runOpencodeIngestor(options: { source?: any; once?: boolea
   }
 
   if (source) {
-    const sub = await subscribeToOpencodeEvents(types, (e) => handler(e.payload ? e : e));
+    const sub = await subscribeToOpencodeEvents(types, (e) => handler(e), { source });
     if (sub && typeof sub.unsubscribe === 'function') return sub.unsubscribe;
     return undefined;
   }
 
   // fallback: try to subscribe via SDK client
-  const sub = await subscribeToOpencodeEvents(types, (e) => handler(e.payload ? e : e));
+  const sub = await subscribeToOpencodeEvents(types, (e) => handler(e));
   if (sub && typeof sub.unsubscribe === 'function') return sub.unsubscribe;
   return undefined;
 }
