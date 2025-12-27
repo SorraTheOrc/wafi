@@ -1,6 +1,6 @@
 ---
 description: Muse (Designer AI) — design variants and UX flows
-mode: primary
+mode: subagent
 model: github-copilot/gpt-5.2
 temperature: 0.7
 tools:

@@ -37,7 +37,6 @@ agents:
     label: User
     window: core
     is_user: true
-    # (no worktree configuration)
     env:
       BD_ACTOR: $USER
     idle:
@@ -50,7 +49,6 @@ agents:
     label: Map (PM)
     role: pm
     window: core
-    # (no worktree configuration)
     env:
       BD_ACTOR: map
     idle:
@@ -60,82 +58,84 @@ agents:
 
   # === SPECIALIST WINDOW ===
   # On-demand agents for specific tasks (DevOps, meta-work, user shell)
+  # === SPECIALIST WINDOW ===
+  # On-demand agents for specific tasks (DevOps, meta-work, user shell)
+
+  # The following specialist agents are currently disabled.
+  # To re-enable, remove the leading '#' from each line in this block.
 
   # Muse (Designer AI) - design variants and UX flows
-  - name: muse
-    label: Muse (Design)
-    role: design
-    window: specialist
-    # (no worktree configuration)
-    env:
-      BD_ACTOR: muse
-    idle:
-      task: "tmux select-pane -T \"Muse (Design)\""
-      frequency: 10
-      variance: 10
+  # - name: muse
+  #   label: Muse (Design)
+  #   role: design
+  #   window: specialist
+  #   env:
+  #     BD_ACTOR: muse
+  #   idle:
+  #     task: "tmux select-pane -T \"Muse (Design)\""
+  #     frequency: 10
+  #     variance: 10
 
   # Patch (Implementation AI) - implement small, correct changes
-  - name: patch
-    label: Patch (Impl)
-    role: build
-    window: specialist
-    # (no worktree configuration)
-    env:
-      BD_ACTOR: patch
-    idle:
-      task: "tmux select-pane -T \"Patch (Impl)\""
-      frequency: 10
-      variance: 10
+  # - name: patch
+  #   label: Patch (Impl)
+  #   role: build
+  #   window: specialist
+  #   env:
+  #     BD_ACTOR: patch
+  #   idle:
+  #     task: "tmux select-pane -T \"Patch (Impl)\""
+  #     frequency: 10
+  #     variance: 10
 
   # Scribbler (Docs AI) - maintain PRDs and repo docs
-  - name: scribbler
-    label: Scribbler (Docs)
-    role: docs
-    window: specialist
-    # (no worktree configuration)
-    env:
-      BD_ACTOR: scribbler
-    idle:
-      task: "tmux select-pane -T \"Scribbler (Docs)\""
-      frequency: 10
-      variance: 10
+  # - name: scribbler
+  #   label: Scribbler (Docs)
+  #   role: docs
+  #   window: specialist
+  #   env:
+  #     BD_ACTOR: scribbler
+  #   idle:
+  #     task: "tmux select-pane -T \"Scribbler (Docs)\""
+  #     frequency: 10
+  #     variance: 10
 
   # Pixel (Art AI) - asset generation and review support
-  - name: pixel
-    label: Pixel (Art)
-    role: art
-    window: specialist
-    # (no worktree configuration)
-    env:
-      BD_ACTOR: pixel
-    idle:
-      task: "tmux select-pane -T \"Pixel (Art)\""
-      frequency: 10
-      variance: 10
+  # - name: pixel
+  #   label: Pixel (Art)
+  #   role: art
+  #   window: specialist
+  #   # (no worktree configuration)
+  #   env:
+  #     BD_ACTOR: pixel
+  #   idle:
+  #     task: "tmux select-pane -T \"Pixel (Art)\""
+  #     frequency: 10
+  #     variance: 10
 
   # Probe (QA AI) - quality gates, test strategy, and risk checks
-  - name: probe
-    label: Probe (QA)
-    role: review
-    window: specialist
-    # (no worktree configuration)
-    env:
-      BD_ACTOR: probe
-    idle:
-      task: "tmux select-pane -T \"Probe (QA)\""
-      frequency: 10
-      variance: 10
+  # - name: probe
+  #   label: Probe (QA)
+  #   role: review
+  #   window: specialist
+  #   # (no worktree configuration)
+  #   env:
+  #     BD_ACTOR: probe
+  #   idle:
+  #     task: "tmux select-pane -T \"Probe (QA)\""
+  #     frequency: 10
+  #     variance: 10
 
   # Ship (DevOps AI) - CI, build, release readiness
-  - name: ship
-    label: Ship (DevOps)
-    role: devops
-    window: specialist
-    # (no worktree configuration)
-    env:
-      BD_ACTOR: ship
-    idle:
-      task: "tmux select-pane -T \"Ship (DevOps)\""
-      frequency: 10
-      variance: 10
+  # - name: ship
+  #   label: Ship (DevOps)
+  #   role: devops
+  #   window: specialist
+  #   # (no worktree configuration)
+  #   env:
+  #     BD_ACTOR: ship
+  #   idle:
+  #     task: "tmux select-pane -T \"Ship (DevOps)\""
+  #     frequency: 10
+  #     variance: 10
 

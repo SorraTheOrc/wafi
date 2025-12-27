@@ -1,6 +1,6 @@
 ---
 description: Patch (Implementation AI) — implement small, correct changes
-mode: primary
+mode: subagent
 model: github-copilot/gpt-5.1-codex-max
 temperature: 0.1
 tools:
@@ -10,7 +10,8 @@ tools:
 permission:
   bash:
     "bd *": allow
-    "git *": allow
+    "git switch*": allow
+    "gh pr*": allow
     "npm *": allow
     "rg": allow
     "waif *": allow

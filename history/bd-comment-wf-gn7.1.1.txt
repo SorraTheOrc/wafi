@@ -1,0 +1,5 @@
+Started spike: created history/wf-gn7.1-spike.md and scripts/wf-gn7.1-inject.js (POC).
+Opened PR #68: https://github.com/SorraTheOrc/waif/pull/68
+Next: review feedback, add per-session scoping, and create follow-up issues as needed.
+Files created: history/wf-gn7.1-spike.md, scripts/wf-gn7.1-inject.js
+Planning artifacts live in history/.

@@ -1,6 +1,6 @@
 ---
 description: Scribbler (Docs AI) — maintain PRDs and repo docs
-mode: primary
+mode: subagent
 model: github-copilot/gpt-5.2
 temperature: 0.6
 tools:

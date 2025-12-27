@@ -1,6 +1,6 @@
 ---
 description: Pixel (Art AI) — asset generation and review support
-mode: primary
+mode: subagent
 model: github-copilot/gpt-5.2
 temperature: 0.7
 tools:

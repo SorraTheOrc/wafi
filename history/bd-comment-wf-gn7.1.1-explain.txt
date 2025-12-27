@@ -1,0 +1,77 @@
+Summary of actions and how to test the wf-gn7.1.1 spike
+
+What I did:
+- Created branch: feature/wf-gn7.1.1-spike (pushed to origin)
+- Claimed the Beads issue: bd update wf-gn7.1.1 --status in_progress --assignee patch
+- Added decision record: history/wf-gn7.1-spike.md (describes findings, follow-ups, risks)
+- Added a small injector POC: scripts/wf-gn7.1-inject.js (connects to an OpenCode runtime and posts a context payload to /sessions/:id/context)
+- Opened PR #68: https://github.com/SorraTheOrc/waif/pull/68
+- Started bd daemon with auto-commit=true (daemon will auto-commit beads DB/JSONL changes; auto-push/pull remain disabled)
+
+Goal:
+- Deliver a 1-2 day spike that demonstrates feasibility of "bd-prime" context injection into OpenCode sessions and documents required safety considerations. The POC shows the minimal pattern to post a context payload into a session (non-destructive).
+
+How to test locally:
+
+Prereqs:
+- Git repo up-to-date locally and on the spike branch (feature/wf-gn7.1.1-spike)
+- Node.js installed (v16+)
+- Optional: an OpenCode runtime or a simple local mock HTTP endpoint
+
+Quick smoke test (with a real OpenCode runtime):
+1) Checkout the branch:
+   git fetch origin
+   git checkout feature/wf-gn7.1.1-spike
+
+2) Install dependencies (if you need to run tests or build):
+   npm install
+
+3) Export environment variables pointing to your OpenCode runtime (example):
+   export OPENCODE_URL="https://your-opencode.example"
+   export OPENCODE_API_KEY="<your-key>"
+
+4) Run the injector script:
+   node scripts/wf-gn7.1-inject.js --session test-session-123 --context '{"beads":"example-prime"}'
+
+Expected output:
+- "Context injected successfully" on success
+- On failure: clear error messages such as "Missing OPENCODE_URL or OPENCODE_API_KEY" or "OpenCode API error: <status> <body>"
+
+If you don't have an OpenCode runtime, run a quick local mock server to accept the POST and respond 200:
+
+1) Start a minimal server (one-liner):
+   node -e "const http=require('http');http.createServer((req,res)=>{let b='';req.on('data',c=>b+=c);req.on('end',()=>{console.log('RECEIVED',req.method,req.url,b);res.writeHead(200);res.end('ok');});}).listen(8080);console.log('listening 8080');"
+
+2) Run the injector against the mock server:
+   OPENCODE_URL="http://localhost:8080" OPENCODE_API_KEY=dummy node scripts/wf-gn7.1-inject.js --session test-session-123 --context '{"beads":"example-prime"}'
+
+You should see in the server console the received POST and the injector printing "Context injected successfully".
+
+How to review the spike and PR:
+- PR: https://github.com/SorraTheOrc/waif/pull/68
+  - Files to focus: history/wf-gn7.1-spike.md, scripts/wf-gn7.1-inject.js
+- Beads issue state: bd show wf-gn7.1.1 --json (should be in_progress)
+- Comments: bd comments list wf-gn7.1.1 --json
+
+Validation and tests:
+- The POC has no unit tests. If you want tests added, I can add a small test that exercises the injector with a mocked fetch.
+- Repo-level tests: npm run test (will run build + vitest). Run if you changed TypeScript or test code.
+
+Safety notes and follow-ups (short):
+- The POC is non-destructive; it POSTs a context payload for demonstration only.
+- Before any production use we must add per-session scoping, signed payloads, RBAC checks, and audit logging.
+- Recommended follow-up Beads issues: bd-prime integration, command wiring (/bd-*), safety review. I can create these and link them to wf-gn7.1.1 if you want.
+
+Files mentioned:
+- history/wf-gn7.1-spike.md
+- scripts/wf-gn7.1-inject.js
+- feature branch: feature/wf-gn7.1.1-spike
+- PR: https://github.com/SorraTheOrc/waif/pull/68
+
+If you'd like me to proceed I can:
+- Create the recommended follow-up Beads issues (linked to this spike)
+- Add basic unit tests for the injector (mocking fetch)
+- Extend the POC with per-session scoping and signed payloads
+- Edit the PR description to include run instructions and test notes
+
+Tell me which of the above you'd like next, or ask any clarifying question.
