@@ -1,7 +1,20 @@
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { dirname, resolve } from 'path';
 
 let client: any | undefined;
+
+export const DEFAULT_OPENCODE_LOG = '.waif/opencode_events.jsonl';
+
+export interface OpencodeEvent {
+  type: string;
+  payload: any;
+  ts?: string;
+}
+
+export interface OpencodeEventSource {
+  on(event: string, handler: (payload: any) => void): void;
+  off?(event: string, handler: (payload: any) => void): void;
+}
 
 function readYaml(path: string): any | undefined {
   try {
@@ -120,11 +133,11 @@ export async function ensureClient(): Promise<any | undefined> {
             if (name) outLines.push(`${name}: ${id}`);
           }
           if (outLines.length > 0) {
-            const { writeFileSync, mkdirSync } = await import('fs');
-            const { dirname } = await import('path');
+            const { writeFileSync: wfs, mkdirSync: mds } = await import('fs');
+            const { dirname: dn } = await import('path');
             const target = resolve('.opencode/agent_map.yaml');
-            mkdirSync(dirname(target), { recursive: true });
-            writeFileSync(target, outLines.join('\n') + '\n', 'utf8');
+            mds(dn(target), { recursive: true });
+            wfs(target, outLines.join('\n') + '\n', 'utf8');
           }
         }
       }
@@ -192,11 +205,11 @@ export async function ensureClient(): Promise<any | undefined> {
 
     // ensure agent_map exists (create empty cache if missing)
     try {
-      const { writeFileSync, existsSync, mkdirSync } = await import('fs');
+      const { writeFileSync: wfs, existsSync, mkdirSync: mds } = await import('fs');
       const target = resolve('.opencode/agent_map.yaml');
       if (!existsSync(target)) {
-        mkdirSync(resolve('.opencode'), { recursive: true });
-        writeFileSync(target, '# Auto-generated agent map\n', 'utf8');
+        mds(resolve('.opencode'), { recursive: true });
+        wfs(target, '# Auto-generated agent map\n', 'utf8');
       }
     } catch (e) {
       // ignore
@@ -224,4 +237,70 @@ export function loadAgentMap(): Record<string, string> {
   } catch (e) {
     return {};
   }
+}
+
+function getEventSourceFromClient(cl: any): OpencodeEventSource | undefined {
+  if (!cl) return undefined;
+  if (cl.events && typeof cl.events.on === 'function') return cl.events as OpencodeEventSource;
+  if (cl._sdk && cl._sdk.events && typeof cl._sdk.events.on === 'function') return cl._sdk.events as OpencodeEventSource;
+  return undefined;
+}
+
+export async function subscribeToOpencodeEvents(
+  eventTypes: string[],
+  handler: (event: OpencodeEvent) => void,
+  options?: { source?: OpencodeEventSource },
+): Promise<{ unsubscribe: () => void } | undefined> {
+  const source = options?.source || getEventSourceFromClient(await ensureClient());
+  if (!source || typeof source.on !== 'function') return undefined;
+
+  const listeners: Array<{ type: string; fn: (payload: any) => void }> = [];
+  for (const type of eventTypes) {
+    const fn = (payload: any) => handler({ type, payload, ts: new Date().toISOString() });
+    source.on(type, fn);
+    listeners.push({ type, fn });
+  }
+
+  return {
+    unsubscribe: () => {
+      if (!source.off) return;
+      for (const { type, fn } of listeners) {
+        try {
+          source.off(type, fn);
+        } catch (e) {
+          // ignore detach errors
+        }
+      }
+    },
+  };
+}
+
+function truncate(text: string, max = 80): string {
+  if (!text) return '';
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 1)}…`;
+}
+
+export function formatOpencodeEvent(event: OpencodeEvent): string {
+  const payload = event.payload || {};
+  const agent = payload.agent?.name || payload.agent?.id || payload.agent || payload.agentName || 'unknown';
+  const messageText =
+    (payload.message && (payload.message.content || payload.message.text)) || payload.text || payload.content || payload.summary;
+  const msgPart = messageText ? ` message="${truncate(String(messageText))}"` : '';
+  return `[opencode] ${event.type} agent=${agent}${msgPart}`;
+}
+
+export function appendOpencodeEventLog(logPath: string, event: OpencodeEvent): void {
+  const abs = resolve(logPath);
+  mkdirSync(dirname(abs), { recursive: true });
+  const record = { ...event, ts: event.ts || new Date().toISOString() };
+  writeFileSync(abs, `${JSON.stringify(record)}\n`, { flag: 'a' });
+}
+
+export function getSampleOpencodeEvents(): OpencodeEvent[] {
+  return [
+    { type: 'agent.started', payload: { agent: { name: 'map' } } },
+    { type: 'message.returned', payload: { agent: { name: 'forge' }, message: { content: 'finished parsing request' } } },
+    { type: 'agent.stopped', payload: { agent: { name: 'ship' }, reason: 'complete' } },
+  ];
 }

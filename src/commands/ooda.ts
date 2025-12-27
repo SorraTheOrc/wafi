@@ -5,7 +5,15 @@ import { dirname } from 'node:path';
 import yaml from 'yaml';
 import { emitJson, logStdout } from '../lib/io.js';
 import { CliError } from '../types.js';
-import { loadAgentMap } from '../lib/opencode.js';
+import {
+  appendOpencodeEventLog,
+  DEFAULT_OPENCODE_LOG,
+  formatOpencodeEvent,
+  getSampleOpencodeEvents,
+  subscribeToOpencodeEvents,
+  loadAgentMap,
+} from '../lib/opencode.js';
+
 
 interface PaneRow {
   pane: string;
@@ -300,4 +308,43 @@ export function createOodaCommand() {
       }
     });
   return cmd;
+}
+
+export async function runOpencodeIngestor(options: { source?: any; once?: boolean; sample?: boolean; logPath?: string } = {}) {
+  const { source, once = false, sample = false, logPath } = options;
+  const writePath = logPath || DEFAULT_OPENCODE_LOG;
+  const types = ['agent.started', 'agent.stopped', 'message.returned'];
+
+  const handler = (event: any) => {
+    const ev = typeof event.type === 'string' ? event : { type: (event && event.type) || 'unknown', payload: event };
+    const formatted = formatOpencodeEvent(ev as any);
+    logStdout(formatted);
+    try {
+      if (logPath) appendOpencodeEventLog(writePath, ev as any);
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  if (sample) {
+    const list = getSampleOpencodeEvents();
+    for (const e of list) {
+      handler(e);
+      try {
+        if (logPath) appendOpencodeEventLog(writePath, e);
+      } catch (e) {}
+    }
+    return;
+  }
+
+  if (source) {
+    const sub = await subscribeToOpencodeEvents(types, (e) => handler(e.payload ? e : e));
+    if (sub && typeof sub.unsubscribe === 'function') return sub.unsubscribe;
+    return undefined;
+  }
+
+  // fallback: try to subscribe via SDK client
+  const sub = await subscribeToOpencodeEvents(types, (e) => handler(e.payload ? e : e));
+  if (sub && typeof sub.unsubscribe === 'function') return sub.unsubscribe;
+  return undefined;
 }
