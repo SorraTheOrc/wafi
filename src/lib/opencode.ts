@@ -1,4 +1,5 @@
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, createReadStream } from 'fs';
+import readline from 'readline';
 import { dirname, resolve } from 'path';
 
 let client: any | undefined;
@@ -14,6 +15,21 @@ export interface OpencodeEvent {
 export interface OpencodeEventSource {
   on(event: string, handler: (payload: any) => void): void;
   off?(event: string, handler: (payload: any) => void): void;
+}
+
+export async function* readMockEvents(filePath: string): AsyncIterable<any> {
+  const abs = resolve(filePath);
+  const stream = createReadStream(abs, { encoding: 'utf8' });
+  const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+  for await (const line of rl) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try {
+      yield JSON.parse(trimmed);
+    } catch (e) {
+      // skip invalid JSON lines
+    }
+  }
 }
 
 function readYaml(path: string): any | undefined {
@@ -241,8 +257,13 @@ export function loadAgentMap(): Record<string, string> {
 
 function getEventSourceFromClient(cl: any): OpencodeEventSource | undefined {
   if (!cl) return undefined;
+  // Common shapes: client.events, client._sdk.events, client._sdk.event (singular) or client.event
   if (cl.events && typeof cl.events.on === 'function') return cl.events as OpencodeEventSource;
+  if (cl.event && typeof cl.event.on === 'function') return cl.event as OpencodeEventSource;
   if (cl._sdk && cl._sdk.events && typeof cl._sdk.events.on === 'function') return cl._sdk.events as OpencodeEventSource;
+  if (cl._sdk && cl._sdk.event && typeof cl._sdk.event.on === 'function') return cl._sdk.event as OpencodeEventSource;
+  // Fallback: some SDKs expose an `event` emitter under different paths (e.g., client._sdk.mcp.events)
+  if (cl._sdk && cl._sdk.mcp && cl._sdk.mcp.events && typeof cl._sdk.mcp.events.on === 'function') return cl._sdk.mcp.events as OpencodeEventSource;
   return undefined;
 }
 
@@ -251,8 +272,76 @@ export async function subscribeToOpencodeEvents(
   handler: (event: OpencodeEvent) => void,
   options?: { source?: OpencodeEventSource },
 ): Promise<{ unsubscribe: () => void } | undefined> {
-  const source = options?.source || getEventSourceFromClient(await ensureClient());
-  if (!source || typeof source.on !== 'function') return undefined;
+  const clientObj = await ensureClient();
+  const sourceCandidate = options?.source || clientObj;
+
+  // Debug: report what we found
+  try {
+    const dbg = { hasClient: !!clientObj, sourceKeys: clientObj ? Object.keys(clientObj).slice(0,50) : null };
+    process.stderr.write(`[debug] opencode: subscribeToOpencodeEvents probe: ${JSON.stringify(dbg)}\n`);
+  } catch (e) {
+    // ignore
+  }
+
+  // Preferred SDK path: use the SDK event subscribe API (opencode SDK exposes client._sdk.event.subscribe)
+  const sdkEvent = (clientObj && (clientObj._sdk?.event || clientObj._sdk?.events || clientObj.event || clientObj.events)) as any;
+  if (sdkEvent && typeof sdkEvent.subscribe === 'function') {
+    process.stderr.write(`[debug] opencode: using SDK subscribe() API for eventTypes=${JSON.stringify(eventTypes)}\n`);
+    try {
+      // call subscribe with a filter based on eventTypes
+      const filter = { type: eventTypes };
+      // The SDK may accept (opts, cb) and return a Promise or a subscription object
+      const subRes = await sdkEvent.subscribe({ filter }, (payload: any) => {
+        try {
+          const type = payload?.type || 'unknown';
+          handler({ type, payload, ts: new Date().toISOString() });
+        } catch (e) {
+          process.stderr.write(`[debug] opencode: handler error ${String(e)}\n`);
+        }
+      });
+
+      process.stderr.write(`[debug] opencode: subscribe returned ${typeof subRes}\n`);
+
+      // Normalize unsubscribe function
+      let unsubCalled = false;
+      const unsubscribe = () => {
+        if (unsubCalled) return;
+        unsubCalled = true;
+        try {
+          if (typeof subRes === 'function') {
+            subRes();
+            return;
+          }
+          if (subRes && typeof subRes.unsubscribe === 'function') {
+            subRes.unsubscribe();
+            return;
+          }
+          if (subRes && typeof subRes.close === 'function') {
+            subRes.close();
+            return;
+          }
+          if (sdkEvent && typeof sdkEvent.unsubscribe === 'function') {
+            try { sdkEvent.unsubscribe(); } catch (_) {}
+            return;
+          }
+        } catch (e) {
+          process.stderr.write(`[debug] opencode: unsubscribe error ${String(e)}\n`);
+        }
+      };
+
+      return { unsubscribe };
+    } catch (e: any) {
+      process.stderr.write(`[debug] opencode: subscribe() threw ${e && e.stack ? e.stack : String(e)}\n`);
+      return undefined;
+    }
+  }
+
+  // Fallback: EventEmitter-style (not preferred for v1, kept for compatibility)
+  const source = options?.source || getEventSourceFromClient(clientObj);
+  if (!source || typeof source.on !== 'function') {
+    process.stderr.write('[debug] opencode: no event source with subscribe() or on/off found\n');
+    return undefined;
+  }
 
   const listeners: Array<{ type: string; fn: (payload: any) => void }> = [];
   for (const type of eventTypes) {

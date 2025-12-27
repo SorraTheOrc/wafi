@@ -1,0 +1,21 @@
+bd comment for wf-r1d.10 — claimed and plan recorded
+
+Commands executed:
+- bd ready --json (listed ready issues)
+- wrote plan to history/wf-r1d.10-plan.txt
+- bd update wf-r1d.10 --status in_progress --assignee patch --json
+
+Files created/edited by Map in this session:
+- history/wf-r1d.10-plan.txt (created)
+- history/bd-comment-wf-r1d.10.txt (this file)
+
+Next steps (Map):
+- Launch patch agent to implement ingester and tests per plan
+- Coordinate PR and bd updates
+
+Remaining risks/follow-ups:
+- Need to choose and implement redaction policy
+- Decide on retention format (default: append JSONL for v1)
+- Ensure tests run in CI without external OpenCode dependency
+
+Reference: wf-r1d.10 (beads)

@@ -1,0 +1,28 @@
+Implementation performed by patch (Map orchestrated)
+
+Files created/edited:
+- src/lib/ooda-ingester.ts (edited/created) — ingester, mapping, redaction, append
+- src/lib/opencode.ts (existing) — readMockEvents already present and used
+- src/commands/ooda.ts (edited) — added --mock wiring to runIngester
+- tests/ooda-parser.test.ts (existing) — uses new functions
+- tests/ooda-ingester.integration.test.ts (existing) — integration test for mock path
+- tests/ooda-cli-opencode.test.ts (existing) — ensures CLI forwards flags
+
+Commands executed by Map:
+- bd update wf-r1d.10 --status in_progress --assignee patch
+- Created history/wf-r1d.10-plan.txt
+- Launched patch agent to implement files (local edits only; no git commits or pushes performed)
+
+Decisions taken:
+- v1 persistence: append newline-delimited JSON to history/ooda_status.jsonl
+- Redaction: keys containing token/password/secret/pem/key are replaced with '[REDACTED]' (case-insensitive, partial matches)
+
+Remaining risks/follow-ups:
+- Confirm rotation/archival for history/ooda_status.jsonl (create follow-up issue wf-r1d.11)
+- Confirm secret redaction rules with security team; may need regex patterns for embedded secrets
+- Add CLI documentation and PRD update if desired
+
+Next bd steps recommended:
+- bd sync (to save issue state and plan)
+- Create branch and commit code changes
+- Open PR referencing wf-r1d.10 and PRD

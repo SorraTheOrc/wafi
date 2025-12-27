@@ -14,6 +14,7 @@ import {
   loadAgentMap,
   isEnabled,
 } from '../lib/opencode.js';
+import { runIngester, OODA_STATUS_LOG } from '../lib/ooda-ingester.js';
 
 
 interface PaneRow {
@@ -250,9 +251,9 @@ function logProbe(logPath: string, rows: PaneRow[], raw?: string): void {
 }
 
 export function createOodaCommand(
-  deps: { runOpencode?: typeof runOpencodeIngestor; probe?: typeof probeOnce; isOpencodeEnabled?: () => boolean } = {},
+  deps: { runOpencode?: typeof runIngester; probe?: typeof probeOnce; isOpencodeEnabled?: () => boolean } = {},
 ) {
-  const runOpencode = deps.runOpencode ?? runOpencodeIngestor;
+  const runOpencode = deps.runOpencode ?? runIngester;
   const probe = deps.probe ?? probeOnce;
   const opencodeEnabled = deps.isOpencodeEnabled ?? isEnabled;
 
@@ -267,6 +268,7 @@ export function createOodaCommand(
     .option('--probe', 'Use tmux probe instead of OpenCode events')
     .option('--opencode', 'Subscribe to OpenCode agent events')
     .option('--opencode-sample', 'Use sample OpenCode events (no server)')
+    .option('--mock <path>', 'Use mock NDJSON events file for OpenCode')
     .action(async (options, command) => {
       const jsonOutput = Boolean(options.json ?? command.parent?.getOptionValue('json'));
       const interval = Number(options.interval ?? 5) || 5;
@@ -275,12 +277,13 @@ export function createOodaCommand(
       const opencodePreferred = opencodeEnabled() && !options.probe;
 
       if (opencodePreferred) {
-        const logPathForIngestor = options.log || DEFAULT_OPENCODE_LOG;
-        if (once) {
-          await runOpencode({ once: true, sample: Boolean(options.sample), logPath: logPathForIngestor });
-          return;
-        }
-        await runOpencode({ once: false, sample: Boolean(options.sample), logPath: logPathForIngestor });
+        const logPathForIngestor = options.log || OODA_STATUS_LOG;
+        await runOpencode({
+          once,
+          sample: Boolean(options.sample),
+          logPath: logPathForIngestor,
+          mockPath: options.mock,
+        });
         return;
       }
 
@@ -333,10 +336,11 @@ export function createOodaCommand(
 }
 
 
+// Legacy ingestor kept for backward compatibility in tests; prefer runIngester
 export async function runOpencodeIngestor(
-  options: { source?: any; once?: boolean; sample?: boolean; logPath?: string; log?: boolean } = {},
+  options: { source?: any; once?: boolean; sample?: boolean; logPath?: string; log?: boolean; mockPath?: string } = {},
 ) {
-  const { source, once = false, sample = false, logPath, log = true } = options;
+  const { source, once = false, sample = false, logPath, log = true, mockPath } = options;
   const writePath = log ? logPath || DEFAULT_OPENCODE_LOG : undefined;
   const types = ['agent.started', 'agent.stopped', 'message.returned'];
 
@@ -352,6 +356,17 @@ export async function runOpencodeIngestor(
       }
     }
   };
+
+  if (mockPath) {
+    const { readMockEvents } = await import('../lib/opencode.js');
+    let processed = 0;
+    for await (const ev of readMockEvents(mockPath)) {
+      handler(ev);
+      processed += 1;
+      if (once && processed > 0) break;
+    }
+    return;
+  }
 
   if (sample) {
     const list = getSampleOpencodeEvents();

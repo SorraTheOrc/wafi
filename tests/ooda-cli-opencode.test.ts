@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createOodaCommand } from '../src/commands/ooda.js';
 import * as opencodeLib from '../src/lib/opencode.js';
-import * as oodaCmd from '../src/commands/ooda.js';
+import { OODA_STATUS_LOG } from '../src/lib/ooda-ingester.js';
 
 describe('ooda CLI selects opencode ingester by default when enabled', () => {
   let spy: any;
@@ -13,17 +13,17 @@ describe('ooda CLI selects opencode ingester by default when enabled', () => {
     vi.restoreAllMocks();
   });
 
-  it('calls runOpencodeIngestor with defaults', async () => {
+  it('calls runIngester with defaults', async () => {
     const runSpy = vi.fn().mockResolvedValue(undefined);
     const cmd = createOodaCommand({ runOpencode: runSpy, isOpencodeEnabled: () => true });
     await cmd.parse(['node', 'ooda'], { from: 'user' });
-    expect(runSpy).toHaveBeenCalledWith({ once: false, sample: false, logPath: opencodeLib.DEFAULT_OPENCODE_LOG, source: undefined });
+    expect(runSpy).toHaveBeenCalledWith({ once: false, sample: false, logPath: OODA_STATUS_LOG, mockPath: undefined });
   });
 
-  it('forwards --once and --sample to ingester', async () => {
+  it('forwards --once --sample --mock to ingester', async () => {
     const runSpy = vi.fn().mockResolvedValue(undefined);
     const cmd = createOodaCommand({ runOpencode: runSpy, isOpencodeEnabled: () => true });
-    await cmd.parse(['node', 'ooda', '--once', '--sample', '--log', './tmp/test.jsonl'], { from: 'user' });
-    expect(runSpy).toHaveBeenCalledWith({ once: true, sample: true, logPath: './tmp/test.jsonl', source: undefined });
+    await cmd.parse(['node', 'ooda', '--once', '--sample', '--log', './tmp/test.jsonl', '--mock', './m.jsonl'], { from: 'user' });
+    expect(runSpy).toHaveBeenCalledWith({ once: true, sample: true, logPath: './tmp/test.jsonl', mockPath: './m.jsonl' });
   });
 });

@@ -1,0 +1,39 @@
+Claim and implementation plan — wf-r1d.10
+
+Goal: Implement OODA v1 OpenCode event ingester + console logging.
+
+Branch: feature/wf-r1d.10/ingester
+Assignee: patch
+Beads issue: wf-r1d.10
+
+Files to add/edit:
+- src/lib/ooda-ingester.ts  (new)
+- src/lib/opencode.ts       (extend helpers / add mock reader)
+- src/commands/ooda.ts      (wire CLI flags to ingester)
+- tests/ooda-parser.test.ts
+- tests/ooda-ingester.integration.test.ts
+- .waif/opencode_events.jsonl (sample input for local runs)
+- history/ooda_status.jsonl (persistence output)
+- history/wf-r1d.10-plan.txt (this planning artifact)
+
+Acceptance criteria:
+- bd: wf-r1d.10 status=in_progress assigned to patch
+- Running: OPENCODE_ENABLED=1 node ./bin/waif ooda --mock .waif/opencode_events.jsonl prints parsed events and writes history/ooda_status.jsonl
+- Unit tests for parser and redaction pass (npm test)
+
+Test commands:
+- npm test -- tests/ooda-*.test.ts
+- node ./bin/waif ooda --mock .waif/opencode_events.jsonl --once
+
+Notes / risks:
+- Need to decide snapshot retention format (append JSONL vs timestamped YAML). Default: append to history/ooda_status.jsonl for v1.
+- Ensure redaction of potential secrets before persisting.
+- If bd comment command fails, fall back to bd update with --note.
+
+Next actions performed by Map:
+1) Mark wf-r1d.10 in_progress and assign to patch (bd update)
+2) Add this plan to history/ (done)
+3) Add a bd comment referencing files
+4) Launch patch agent to implement (task subagent)
+
+If you want me to stop before implementation, reply STOP. Otherwise I'll proceed to claim and start patch implementation.

@@ -1,0 +1,3 @@
+
+
+Note: The ooda CLI now prefers the OpenCode event ingester when OPENCODE_ENABLED is true. A new --probe flag (opt-in) restores the tmux pane probe behavior for debugging.
