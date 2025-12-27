@@ -276,6 +276,11 @@ export async function subscribeToOpencodeEvents(
     return value;
   }
 
+  const debugOn = Boolean(options?.debug || process.env.OPENCODE_DEBUG);
+
+  let eventsSeen = 0;
+  let noEventTimer: ReturnType<typeof setTimeout> | undefined;
+
   const subRes = await source.subscribe({ filter: { type: eventTypes } }, (payload: any) => {
     const type = payload?.type || 'unknown';
     const body = payload && typeof payload === 'object' && 'payload' in payload ? (payload as any).payload : payload;
@@ -296,8 +301,27 @@ export async function subscribeToOpencodeEvents(
       }
     }
 
+    eventsSeen += 1;
+    if (eventsSeen === 1 && debugOn) {
+      try { process.stderr.write('[debug] opencode: received first event\n'); } catch (e) {}
+      if (noEventTimer) { clearTimeout(noEventTimer); noEventTimer = undefined; }
+    }
+
     handler(normalizeOpencodeEvent({ type, payload: body, ts: new Date().toISOString() }));
   });
+
+  if (debugOn) {
+    try {
+      // log subscription result details
+      try { process.stderr.write('[debug] opencode: subscription created\n'); } catch (e) {}
+    } catch (e) {}
+
+    noEventTimer = setTimeout(() => {
+      if (eventsSeen === 0) {
+        try { process.stderr.write('[debug] opencode: WARNING - no events received within 5s. Check OpenCode server, network, or subscription filters.\n'); } catch (e) {}
+      }
+    }, 5000);
+  }
 
   let unsubCalled = false;
   const unsubscribe = () => {
