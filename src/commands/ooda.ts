@@ -274,7 +274,7 @@ export function createOodaCommand(
       const once = Boolean(options.once);
       const probeMode = Boolean(options.probe);
       const opencodeSample = Boolean(options.sample || options.opencodeSample);
-      const shouldUseOpencode = !probeMode && (Boolean(options.opencode) || opencodeEnabled());
+      const shouldUseOpencode = !probeMode && (Boolean(options.opencode) || opencodeSample || opencodeEnabled());
 
       if (shouldUseOpencode) {
         const opencodeLogPath = logEnabled ? options.log || DEFAULT_OPENCODE_LOG : undefined;
