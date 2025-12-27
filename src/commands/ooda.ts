@@ -5,14 +5,9 @@ import { dirname } from 'node:path';
 import yaml from 'yaml';
 import { emitJson, logStdout } from '../lib/io.js';
 import { CliError } from '../types.js';
-import {
-  appendOpencodeEventLog,
-  DEFAULT_OPENCODE_LOG,
-  formatOpencodeEvent,
-  subscribeToOpencodeEvents,
-  loadAgentMap,
-} from '../lib/opencode.js';
+import { loadAgentMap } from '../lib/opencode.js';
 import { runIngester, OODA_STATUS_LOG } from '../lib/ooda-ingester.js';
+
 
 
 interface PaneRow {
@@ -248,124 +243,98 @@ function logProbe(logPath: string, rows: PaneRow[], raw?: string): void {
   writeFileSync(logPath, `${header}\n[${ts}]\n${rawLine}\n${body}\n`, { flag: 'a' });
 }
 
+function createSampleOpencodeSource() {
+  const sampleEvents = [
+    {
+      type: 'session.created',
+      payload: {
+        session: { id: 's-1', status: 'running' },
+        agent: { name: 'map' },
+        message: { content: 'booting' },
+        timestamp: '2024-01-01T00:00:00Z',
+      },
+    },
+    { type: 'message.updated', payload: { agent: { name: 'forge' }, message: { content: 'done' } } },
+    { type: 'session.deleted', payload: { agent: { name: 'map' }, reason: 'complete' } },
+  ];
+  return {
+    subscribe: async (_options: any, handler: (payload: any) => void) => {
+      for (const ev of sampleEvents) handler(ev);
+      return () => {};
+    },
+  };
+}
+
+function createFileOpencodeSource(path: string) {
+  try {
+    const txt = readFileSync(path, 'utf8');
+    const events = txt
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((line) => {
+        try {
+          return JSON.parse(line);
+        } catch (e) {
+          return { type: 'unknown', payload: { line } };
+        }
+      });
+    return {
+      subscribe: async (_options: any, handler: (payload: any) => void) => {
+        for (const ev of events) handler(ev);
+        return () => {};
+      },
+    };
+  } catch (e: any) {
+    throw new CliError(`Failed to read mock events file: ${e?.message || e}`, 1);
+  }
+}
+
 export function createOodaCommand(
-  deps: { runOpencode?: typeof runIngester; probe?: typeof probeOnce; isOpencodeEnabled?: () => boolean } = {},
+  deps: {
+    runIngester?: typeof runIngester;
+    sampleSourceFactory?: () => any;
+    isOpencodeEnabled?: () => boolean;
+  } = {},
 ) {
-  const runOpencode = deps.runOpencode ?? runIngester;
-  const probe = deps.probe ?? probeOnce;
+  const runIngest = deps.runIngester ?? runIngester;
+  const sampleSourceFactory = deps.sampleSourceFactory ?? createSampleOpencodeSource;
   const opencodeEnabled = deps.isOpencodeEnabled ?? (() => true);
 
   const cmd = new Command('ooda');
   cmd
-    .description('Probe tmux panes or subscribe to OpenCode events')
-    .option('--once', 'Run a single probe and exit')
-    .option('--interval <seconds>', 'Poll interval in seconds', (v) => parseInt(v, 10), 5)
-    .option('--log <path>', 'Log path (tmux probe) or OpenCode event log')
+    .description('Subscribe to OpenCode events')
+    .option('--once', 'Exit after first received event')
+    .option('--log <path>', 'OpenCode event log path')
     .option('--no-log', 'Disable logging')
-    .option('--sample', 'Use built-in sample data (no tmux)')
-    .option('--probe', 'Use tmux probe instead of OpenCode events')
-    .option('--opencode', 'Subscribe to OpenCode agent events')
+    .option('--sample', 'Use built-in sample OpenCode events (alias: --opencode-sample)')
     .option('--opencode-sample', 'Use sample OpenCode events (no server)')
     .option('--mock <path>', 'Use mock NDJSON events file for OpenCode')
     .option('--opencode-debug', 'Log redacted raw OpenCode events to stderr (alias: --verbose)')
     .action(async (options, command) => {
-      const jsonOutput = Boolean(options.json ?? command.parent?.getOptionValue('json'));
-      const interval = Number(options.interval ?? 5) || 5;
-      const logEnabled = options.log !== false;
       const once = Boolean(options.once);
-      const opencodePreferred = opencodeEnabled() && !options.probe;
+      const logEnabled = options.log !== false;
+      const logPathForIngestor = options.log || OODA_STATUS_LOG;
+      const debug = Boolean(options.opencodeDebug || options.verbose || command.parent?.getOptionValue('verbose'));
+      const useSample = Boolean(options.sample || options.opencodeSample);
 
-        if (opencodePreferred) {
-          const logPathForIngestor = options.log || OODA_STATUS_LOG;
-          const debug = Boolean(options.opencodeDebug || options.verbose || command.parent?.getOptionValue('verbose'));
-          await runOpencode({
-            once,
-            logPath: logPathForIngestor,
-            debug,
-          });
-          return;
-        }
-
-
-      const useSampleProbe = Boolean(options.sample);
-      const logPath = logEnabled ? options.log || `history/ooda_probe_${Math.floor(Date.now() / 1000)}.txt` : undefined;
-
-      const runCycle = () => {
-        const { rows, raw } = probe(useSampleProbe);
-        const table = renderTable(rows);
-        if (jsonOutput) {
-          emitJson({ rows });
-        } else {
-          logStdout(table);
-        }
-        if (logEnabled && logPath) {
-          logProbe(logPath, rows, raw);
-        }
-        return rows;
-      };
-
-      if (once) {
-        runCycle();
-        return;
+      if (!opencodeEnabled()) {
+        throw new CliError('OpenCode ingestion is disabled', 1);
       }
 
-      let stableCycles = 0;
-      let lastFingerprint = '';
-      let currentInterval = interval;
-      const maxBackoff = 60;
-      const backoffCycles = 12;
-      const jitterMax = 1;
+      const source = useSample
+        ? sampleSourceFactory()
+        : options.mock
+          ? createFileOpencodeSource(options.mock)
+          : undefined;
 
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const rows = runCycle();
-        const fingerprint = rows.map((r) => `${r.pane}|${r.status}|${r.title}|${r.reason}`).join(';');
-        if (fingerprint === lastFingerprint) {
-          stableCycles += 1;
-          if (stableCycles >= backoffCycles) currentInterval = maxBackoff;
-        } else {
-          stableCycles = 0;
-          currentInterval = interval;
-          lastFingerprint = fingerprint;
-        }
-        const jitter = Math.floor(Math.random() * (jitterMax + 1));
-        await new Promise((resolve) => setTimeout(resolve, (currentInterval + jitter) * 1000));
-      }
+      await runIngest({
+        once,
+        logPath: logPathForIngestor,
+        debug,
+        source,
+        log: logEnabled,
+      });
     });
   return cmd;
-}
-
-
-// Legacy ingestor kept for backward compatibility in tests; prefer runIngester
-export async function runOpencodeIngestor(
-  options: { source?: any; once?: boolean; sample?: boolean; logPath?: string; log?: boolean; mockPath?: string } = {},
-) {
-  const { source, once = false, sample = false, logPath, log = true, mockPath } = options;
-  const writePath = log ? logPath || DEFAULT_OPENCODE_LOG : undefined;
-  const types = ['agent.started', 'agent.stopped', 'message.returned', 'session.created', 'session.updated', 'session.status', 'session.idle', 'session.deleted', 'message.updated', 'message.removed', 'message.part.updated', 'message.part.removed'];
-
-  const handler = (event: any) => {
-    const ev = typeof event.type === 'string' ? event : { type: (event && event.type) || 'unknown', payload: event };
-    const formatted = formatOpencodeEvent(ev as any);
-    logStdout(formatted);
-    if (writePath) {
-      try {
-        appendOpencodeEventLog(writePath, ev as any);
-      } catch (e) {
-        // ignore
-      }
-    }
-  };
-
-
-  if (source) {
-    const sub = await subscribeToOpencodeEvents(types, (e) => handler(e), { source });
-    if (sub && typeof sub.unsubscribe === 'function') return sub.unsubscribe;
-    return undefined;
-  }
-
-  // fallback: try to subscribe via SDK client
-  const sub = await subscribeToOpencodeEvents(types, (e) => handler(e));
-  if (sub && typeof sub.unsubscribe === 'function') return sub.unsubscribe;
-  return undefined;
 }

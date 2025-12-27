@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { runOpencodeIngestor } from '../src/commands/ooda.js';
+import { runIngester } from '../src/lib/ooda-ingester.js';
 import { createOpencodeSdkMock } from './mocks/opencode-sdk-mock.js';
 
 function captureStdout() {
@@ -31,35 +31,34 @@ describe('opencode ingester', () => {
     } catch (e) {}
   });
 
-  it('logs formatted events to stdout', async () => {
+  it('logs mapped events to stdout', async () => {
     const stopCapture = captureStdout();
     const mock = createOpencodeSdkMock();
-    const unsub = await runOpencodeIngestor({ source: mock._sdk.event, once: false, sample: false, log: false });
+    const unsub = await runIngester({ source: mock._sdk.event, once: true, log: false });
 
     // give microtask time for mock events
     await new Promise((r) => setTimeout(r, 20));
 
     const out = stopCapture();
     expect(out).toContain('agent.started');
-    expect(out).toContain('agent=map');
+    expect(out).toContain('"agent":"map"');
     expect(out).toContain('message.returned');
-    expect(out).toContain('agent=forge');
+    expect(out).toContain('"agent":"forge"');
     // ensure canonical session creates map to started
-    expect(out).toContain('(via session.created)');
+    expect(out).toContain('"originalType":"session.created"');
 
     if (typeof unsub === 'function') unsub();
   });
 
-  it('writes newline-delimited JSON to --log path when provided (once+sample)', async () => {
+  it('writes newline-delimited JSON to --log path when provided', async () => {
     const logPath = path.join(tmpDir, 'oc_events.jsonl');
-    // run once with sample events via mock source
     const mock = createOpencodeSdkMock();
-    await runOpencodeIngestor({ source: mock._sdk.event, once: false, sample: true, logPath });
+    await runIngester({ source: mock._sdk.event, once: true, logPath });
 
     const data = fs.readFileSync(logPath, 'utf8').trim().split(/\r?\n/).filter(Boolean);
     expect(data.length).toBeGreaterThanOrEqual(6);
     const parsed = data.map((l) => JSON.parse(l));
-    const types = parsed.map((p) => p.type);
+    const types = parsed.map((p) => p.event);
     expect(types).toContain('agent.started');
     expect(types).toContain('message.returned');
     expect(types).toContain('agent.stopped');

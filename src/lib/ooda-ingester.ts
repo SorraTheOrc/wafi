@@ -110,6 +110,7 @@ export async function runIngester(options: IngesterOptions = {}) {
     logPath,
     events = ['agent.started', 'agent.stopped', 'message.returned', 'session.created', 'session.updated', 'session.status', 'session.idle', 'session.deleted', 'message.updated', 'message.removed', 'message.part.updated', 'message.part.removed'],
     log = true,
+    debug = false,
   } = options;
   const targetLog = logPath || OODA_STATUS_LOG;
   const shouldLog = log !== false;
@@ -137,7 +138,7 @@ export async function runIngester(options: IngesterOptions = {}) {
         }
       }
     },
-    { source },
+    { source, debug },
   );
 
   if (!subscription || typeof subscription.unsubscribe !== 'function') {

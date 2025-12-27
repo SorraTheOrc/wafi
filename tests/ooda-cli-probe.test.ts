@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createOodaCommand } from '../src/commands/ooda.js';
 
-describe('ooda CLI probe opt-in', () => {
+describe('ooda CLI sample flag', () => {
   beforeEach(() => {
     // nothing
   });
@@ -9,10 +9,11 @@ describe('ooda CLI probe opt-in', () => {
     vi.restoreAllMocks();
   });
 
-  it('runs probeOnce when --probe --once provided', async () => {
-    const probeSpy = vi.fn().mockReturnValue({ rows: [] });
-    const cmd = createOodaCommand({ probe: probeSpy, isOpencodeEnabled: () => true });
-    await cmd.parse(['node', 'ooda', '--probe', '--once'], { from: 'user' });
-    expect(probeSpy).toHaveBeenCalled();
+  it('uses sample source when --opencode-sample', async () => {
+    const runIngester = vi.fn().mockResolvedValue(undefined);
+    const sampleSource = { subscribe: vi.fn() };
+    const cmd = createOodaCommand({ runIngester, isOpencodeEnabled: () => true, sampleSourceFactory: () => sampleSource });
+    await cmd.parse(['node', 'ooda', '--opencode-sample', '--once'], { from: 'user' });
+    expect(runIngester).toHaveBeenCalledWith({ once: true, logPath: 'history/ooda_status.jsonl', debug: false, source: sampleSource, log: true });
   });
 });
