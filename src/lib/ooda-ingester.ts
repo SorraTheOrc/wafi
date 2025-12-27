@@ -1,7 +1,7 @@
 import { dirname, resolve } from 'node:path';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { logStdout } from './io.js';
-import { getSampleOpencodeEvents, isEnabled, readMockEvents, subscribeToOpencodeEvents } from './opencode.js';
+import { subscribeToOpencodeEvents } from './opencode.js';
 
 export const OODA_STATUS_LOG = 'history/ooda_status.jsonl';
 
@@ -90,23 +90,19 @@ function appendRecord(path: string, record: OodaEventRecord): void {
 }
 
 export interface IngesterOptions {
-  mockPath?: string;
+  source?: any;
   once?: boolean;
   logPath?: string;
   events?: string[];
-  sample?: boolean;
-  source?: any;
   log?: boolean;
 }
 
 export async function runIngester(options: IngesterOptions = {}) {
   const {
-    mockPath,
+    source,
     once = false,
     logPath,
     events = ['agent.started', 'agent.stopped', 'message.returned'],
-    sample = false,
-    source,
     log = true,
   } = options;
   const targetLog = logPath || OODA_STATUS_LOG;
@@ -121,35 +117,28 @@ export async function runIngester(options: IngesterOptions = {}) {
     }
   };
 
-  if (mockPath) {
-    let processed = 0;
-    for await (const ev of readMockEvents(mockPath)) {
+  const subscription = await subscribeToOpencodeEvents(
+    events,
+    (ev) => {
       handleEvent(ev);
-      processed += 1;
-      if (once && processed > 0) break;
-    }
-    return;
+      if (once) {
+        try {
+          subscription?.unsubscribe();
+        } catch (e) {
+          // ignore
+        }
+      }
+    },
+    { source },
+  );
+
+  if (!subscription || typeof subscription.unsubscribe !== 'function') {
+    throw new Error('Failed to subscribe to OpenCode events');
   }
 
-  if (sample) {
-    for (const ev of getSampleOpencodeEvents()) {
-      handleEvent(ev);
-      if (once) break;
-    }
-    return;
-  }
+  const unsubscribeRef: { unsubscribe: () => void } = { unsubscribe: subscription.unsubscribe };
 
-  if (!isEnabled()) return;
-
-  let unsubscribe: (() => void) | undefined;
-  const sub = await subscribeToOpencodeEvents(events, (ev) => {
-    handleEvent(ev);
-    if (once && unsubscribe) unsubscribe();
-  }, { source });
-  unsubscribe = sub?.unsubscribe;
-
-  // If we received a subscription object, keep the process alive for continuous mode.
-  if (unsubscribe && !once) {
+  if (!once) {
     // log debug so users know we're waiting for events
     try { process.stderr.write('[debug] ooda-ingester: subscribed and awaiting events (CTRL-C to exit)\n'); } catch (e) {}
 
@@ -161,7 +150,7 @@ export async function runIngester(options: IngesterOptions = {}) {
     try { if (process.stdin && typeof process.stdin.resume === 'function') process.stdin.resume(); } catch (e) {}
 
     await new Promise<void>((resolve) => {
-      const originalUnsubscribe = unsubscribe;
+      const originalUnsubscribe = unsubscribeRef.unsubscribe;
       let cleaned = false;
       const cleanup = () => {
         if (cleaned) return;
@@ -176,7 +165,7 @@ export async function runIngester(options: IngesterOptions = {}) {
       };
 
       // ensure unsubscribe from caller also triggers cleanup
-      unsubscribe = () => cleanup();
+      unsubscribeRef.unsubscribe = () => cleanup();
 
       process.on('SIGINT', cleanup);
       process.on('SIGTERM', cleanup);
@@ -186,5 +175,6 @@ export async function runIngester(options: IngesterOptions = {}) {
     return undefined;
   }
 
-  return unsubscribe;
+  return unsubscribeRef.unsubscribe;
+
 }

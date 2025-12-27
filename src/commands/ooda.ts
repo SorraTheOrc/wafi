@@ -9,10 +9,8 @@ import {
   appendOpencodeEventLog,
   DEFAULT_OPENCODE_LOG,
   formatOpencodeEvent,
-  getSampleOpencodeEvents,
   subscribeToOpencodeEvents,
   loadAgentMap,
-  isEnabled,
 } from '../lib/opencode.js';
 import { runIngester, OODA_STATUS_LOG } from '../lib/ooda-ingester.js';
 
@@ -255,7 +253,7 @@ export function createOodaCommand(
 ) {
   const runOpencode = deps.runOpencode ?? runIngester;
   const probe = deps.probe ?? probeOnce;
-  const opencodeEnabled = deps.isOpencodeEnabled ?? isEnabled;
+  const opencodeEnabled = deps.isOpencodeEnabled ?? (() => true);
 
   const cmd = new Command('ooda');
   cmd
@@ -280,9 +278,7 @@ export function createOodaCommand(
         const logPathForIngestor = options.log || OODA_STATUS_LOG;
         await runOpencode({
           once,
-          sample: Boolean(options.sample),
           logPath: logPathForIngestor,
-          mockPath: options.mock,
         });
         return;
       }
@@ -357,24 +353,6 @@ export async function runOpencodeIngestor(
     }
   };
 
-  if (mockPath) {
-    const { readMockEvents } = await import('../lib/opencode.js');
-    let processed = 0;
-    for await (const ev of readMockEvents(mockPath)) {
-      handler(ev);
-      processed += 1;
-      if (once && processed > 0) break;
-    }
-    return;
-  }
-
-  if (sample) {
-    const list = getSampleOpencodeEvents();
-    for (const e of list) {
-      handler(e);
-    }
-    return;
-  }
 
   if (source) {
     const sub = await subscribeToOpencodeEvents(types, (e) => handler(e), { source });
