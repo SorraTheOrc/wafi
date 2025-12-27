@@ -153,34 +153,23 @@ export async function runIngester(options: IngesterOptions = {}) {
     // log debug so users know we're waiting for events
     try { process.stderr.write('[debug] ooda-ingester: subscribed and awaiting events (CTRL-C to exit)\n'); } catch (e) {}
 
-    // Keep Node's event loop alive using a long-interval timer so the process
-    // doesn't exit immediately when there are no other active handles.
-    const keepAlive: ReturnType<typeof setInterval> | undefined = setInterval(() => {}, 1_000_000_000);
-
-    // Also keep stdin open for compatibility with shells/pipes that expect it.
+    // Keep Node's event loop alive using stdin resume so the process doesn't exit
+    // immediately when there are no other active handles. This provides a simple
+    // foreground keep-alive until the process is terminated.
     try { if (process.stdin && typeof process.stdin.resume === 'function') process.stdin.resume(); } catch (e) {}
 
     await new Promise<void>((resolve) => {
-      const originalUnsubscribe = unsubscribe;
-      let cleaned = false;
       const cleanup = () => {
-        if (cleaned) return;
-        cleaned = true;
-        try { if (keepAlive) clearInterval(keepAlive); } catch (e) {}
-        try { originalUnsubscribe && originalUnsubscribe(); } catch (e) {}
+        try { unsubscribe && unsubscribe(); } catch (e) {}
         try { if (process.stdin && typeof process.stdin.pause === 'function') process.stdin.pause(); } catch (e) {}
         // remove handlers to avoid leaks
         process.off('SIGINT', cleanup);
         process.off('SIGTERM', cleanup);
         resolve();
       };
-
-      // ensure unsubscribe from caller also triggers cleanup
-      unsubscribe = () => cleanup();
-
       process.on('SIGINT', cleanup);
       process.on('SIGTERM', cleanup);
-      // promise remains pending until a signal triggers cleanup or unsubscribe is called
+      // promise remains pending until a signal triggers cleanup
     });
 
     return undefined;
