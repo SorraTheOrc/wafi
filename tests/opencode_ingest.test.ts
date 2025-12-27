@@ -44,6 +44,8 @@ describe('opencode ingester', () => {
     expect(out).toContain('agent=map');
     expect(out).toContain('message.returned');
     expect(out).toContain('agent=forge');
+    // ensure canonical session creates map to started
+    expect(out).toContain('(via session.created)');
 
     if (typeof unsub === 'function') unsub();
   });
@@ -55,11 +57,15 @@ describe('opencode ingester', () => {
     await runOpencodeIngestor({ source: mock._sdk.event, once: false, sample: true, logPath });
 
     const data = fs.readFileSync(logPath, 'utf8').trim().split(/\r?\n/).filter(Boolean);
-    expect(data.length).toBeGreaterThanOrEqual(3);
+    expect(data.length).toBeGreaterThanOrEqual(6);
     const parsed = data.map((l) => JSON.parse(l));
     const types = parsed.map((p) => p.type);
     expect(types).toContain('agent.started');
     expect(types).toContain('message.returned');
     expect(types).toContain('agent.stopped');
+    // ensure canonical forms are mapped too
+    expect(types.filter((t) => t === 'agent.started').length).toBeGreaterThanOrEqual(2);
+    expect(types.filter((t) => t === 'agent.stopped').length).toBeGreaterThanOrEqual(2);
+    expect(types.filter((t) => t === 'message.returned').length).toBeGreaterThanOrEqual(2);
   });
 });

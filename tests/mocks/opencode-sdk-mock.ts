@@ -1,8 +1,10 @@
 export function createOpencodeSdkMock() {
   const sampleEvents = [
     {
-      type: 'agent.started',
+      // canonical session.created should map to agent.started
+      type: 'session.created',
       payload: {
+        session: { id: 's-1', status: 'running' },
         agent: { name: 'map' },
         token: 'abc',
         secret: 'starter',
@@ -11,10 +13,19 @@ export function createOpencodeSdkMock() {
       },
     },
     {
-      type: 'message.returned',
+      // canonical message.updated should map to message.returned
+      type: 'message.updated',
       payload: { agent: { name: 'forge' }, message: { content: 'done' }, secret: 'x' },
     },
-    { type: 'agent.stopped', payload: { agent: { name: 'map' }, reason: 'complete' } },
+    {
+      // canonical session.deleted should map to agent.stopped
+      type: 'session.deleted',
+      payload: { agent: { name: 'map' }, reason: 'complete' },
+    },
+    // keep legacy aliases to ensure backward compatibility
+    { type: 'agent.started', payload: { agent: { name: 'legacy-start' } } },
+    { type: 'message.returned', payload: { agent: { name: 'legacy-msg' }, message: { content: 'hi' } } },
+    { type: 'agent.stopped', payload: { agent: { name: 'legacy-stop' } } },
   ];
 
   const subscribe = async (_options: any, cb: (payload: any) => void) => {

@@ -69,6 +69,7 @@ export function mapToInternalEvent(event: any): OodaEventRecord {
     payload.agent?.name || payload.agent?.id || payload.agentName || payload.agent || payload.agent_id || 'unknown';
   const timestamp = event?.timestamp || event?.ts || payload.timestamp || payload.ts || new Date().toISOString();
   const message = extractMessage(payload);
+  const originalType = event?.originalType;
 
   const record: OodaEventRecord = {
     agent: agent || 'unknown',
@@ -76,6 +77,10 @@ export function mapToInternalEvent(event: any): OodaEventRecord {
     timestamp,
     meta: redactSensitive(payload),
   };
+
+  if (originalType && originalType !== record.event) {
+    record.meta = { ...record.meta, originalType };
+  }
 
   if (message !== undefined) record.message = message;
   return redactSensitive(record);
@@ -102,7 +107,7 @@ export async function runIngester(options: IngesterOptions = {}) {
     source,
     once = false,
     logPath,
-    events = ['agent.started', 'agent.stopped', 'message.returned'],
+    events = ['agent.started', 'agent.stopped', 'message.returned', 'session.created', 'session.updated', 'session.status', 'session.idle', 'session.deleted', 'message.updated', 'message.removed', 'message.part.updated', 'message.part.removed'],
     log = true,
   } = options;
   const targetLog = logPath || OODA_STATUS_LOG;

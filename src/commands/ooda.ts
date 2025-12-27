@@ -338,7 +338,7 @@ export async function runOpencodeIngestor(
 ) {
   const { source, once = false, sample = false, logPath, log = true, mockPath } = options;
   const writePath = log ? logPath || DEFAULT_OPENCODE_LOG : undefined;
-  const types = ['agent.started', 'agent.stopped', 'message.returned'];
+  const types = ['agent.started', 'agent.stopped', 'message.returned', 'session.created', 'session.updated', 'session.status', 'session.idle', 'session.deleted', 'message.updated', 'message.removed', 'message.part.updated', 'message.part.removed'];
 
   const handler = (event: any) => {
     const ev = typeof event.type === 'string' ? event : { type: (event && event.type) || 'unknown', payload: event };

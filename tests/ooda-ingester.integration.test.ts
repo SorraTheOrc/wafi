@@ -32,7 +32,7 @@ describe('ooda ingester integration with mock NDJSON', () => {
     await runIngester({ source: mock._sdk.event, once: true, logPath: historyFile });
 
     const data = fs.readFileSync(historyFile, 'utf8').trim().split(/\r?\n/);
-    expect(data.length).toBe(3);
+    expect(data.length).toBe(6);
 
     const parsed = data.map((l) => JSON.parse(l));
     expect(parsed[0].agent).toBe('map');
@@ -43,5 +43,9 @@ describe('ooda ingester integration with mock NDJSON', () => {
     expect(parsed[1].event).toBe('message.returned');
     expect(parsed[1].meta.secret).toBe('[REDACTED]');
     expect(parsed[2].event).toBe('agent.stopped');
+    // legacy aliases still map
+    expect(parsed.map((p) => p.event)).toContain('agent.started');
+    expect(parsed.map((p) => p.event)).toContain('message.returned');
+    expect(parsed.map((p) => p.event)).toContain('agent.stopped');
   });
 });

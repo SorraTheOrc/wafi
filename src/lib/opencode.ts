@@ -9,11 +9,78 @@ export interface OpencodeEvent {
   type: string;
   payload: any;
   ts?: string;
+  originalType?: string;
 }
 
 export interface OpencodeEventSource {
   subscribe: (options: any, handler: (payload: any) => void) => Promise<any> | any;
   unsubscribe?: () => void;
+}
+
+export const OPENCODE_CANONICAL_EVENT_TYPES = [
+  'session.created',
+  'session.updated',
+  'session.status',
+  'session.idle',
+  'session.deleted',
+  'message.updated',
+  'message.removed',
+  'message.part.updated',
+  'message.part.removed',
+];
+
+export const OPENCODE_LEGACY_EVENT_TYPES = ['agent.started', 'agent.stopped', 'message.returned'];
+export const DEFAULT_OPENCODE_EVENT_TYPES = [...OPENCODE_LEGACY_EVENT_TYPES, ...OPENCODE_CANONICAL_EVENT_TYPES];
+
+function normalizeOpencodeEventType(
+  rawType: string | undefined,
+  payload?: any,
+): { normalizedType: string; originalType?: string } {
+  const originalType = rawType || undefined;
+  const type = (rawType || '').toLowerCase();
+  const payloadType = (payload?.type || '').toLowerCase();
+  const status = (payload?.status || payload?.state || payload?.session?.status || '').toString().toLowerCase();
+
+  const stopStatuses = ['stopped', 'stop', 'idle', 'ended', 'finished', 'complete', 'completed', 'error', 'failed'];
+
+  if (type.includes('message') || payloadType.includes('message')) {
+    return { normalizedType: 'message.returned', originalType };
+  }
+
+  if (['agent.started', 'event.agent.started', 'agent.start'].includes(type)) {
+    return { normalizedType: 'agent.started', originalType };
+  }
+  if (['agent.stopped', 'event.agent.stopped', 'agent.stop'].includes(type)) {
+    return { normalizedType: 'agent.stopped', originalType };
+  }
+
+  if (type.startsWith('session.')) {
+    if (['session.created', 'session.create', 'session.started'].includes(type)) {
+      return { normalizedType: 'agent.started', originalType };
+    }
+    if (['session.deleted', 'session.ended', 'session.finished', 'session.stop', 'session.stopped', 'session.closed'].includes(type)) {
+      return { normalizedType: 'agent.stopped', originalType };
+    }
+    if (type === 'session.idle') return { normalizedType: 'agent.stopped', originalType };
+    if (type === 'session.status' || type === 'session.updated') {
+      if (stopStatuses.includes(status)) return { normalizedType: 'agent.stopped', originalType };
+      if (status) return { normalizedType: 'agent.started', originalType };
+      return { normalizedType: 'agent.started', originalType };
+    }
+  }
+
+  return { normalizedType: rawType || 'unknown', originalType };
+}
+
+export function normalizeOpencodeEvent(event: OpencodeEvent): OpencodeEvent {
+  const preservedOriginal = event?.originalType;
+  const { normalizedType, originalType } = normalizeOpencodeEventType(event?.type, event?.payload);
+  const chosenOriginal = preservedOriginal || originalType;
+  return {
+    ...event,
+    type: normalizedType,
+    originalType: chosenOriginal && normalizedType !== chosenOriginal ? chosenOriginal : undefined,
+  };
 }
 
 function readYaml(path: string): any | undefined {
@@ -194,7 +261,7 @@ export async function subscribeToOpencodeEvents(
   const subRes = await source.subscribe({ filter: { type: eventTypes } }, (payload: any) => {
     const type = payload?.type || 'unknown';
     const body = payload && typeof payload === 'object' && 'payload' in payload ? (payload as any).payload : payload;
-    handler({ type, payload: body, ts: new Date().toISOString() });
+    handler(normalizeOpencodeEvent({ type, payload: body, ts: new Date().toISOString() }));
   });
 
   let unsubCalled = false;
@@ -232,12 +299,14 @@ function truncate(text: string, max = 80): string {
 }
 
 export function formatOpencodeEvent(event: OpencodeEvent): string {
-  const payload = event.payload || {};
+  const normalized = normalizeOpencodeEvent(event);
+  const payload = normalized.payload || {};
   const agent = payload.agent?.name || payload.agent?.id || payload.agent || payload.agentName || 'unknown';
   const messageText =
     (payload.message && (payload.message.content || payload.message.text)) || payload.text || payload.content || payload.summary;
   const msgPart = messageText ? ` message="${truncate(String(messageText))}"` : '';
-  return `[opencode] ${event.type} agent=${agent}${msgPart}`;
+  const typeSuffix = normalized.originalType ? ` (via ${normalized.originalType})` : '';
+  return `[opencode] ${normalized.type}${typeSuffix} agent=${agent}${msgPart}`;
 }
 
 export function appendOpencodeEventLog(logPath: string, event: OpencodeEvent): void {
