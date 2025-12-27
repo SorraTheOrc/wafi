@@ -23,9 +23,10 @@ Focus on:
 - Coordinating the other call-sign agents and capturing decisions + handoffs in the repo
 
 Workflow:
-- Start by confirming the current queue with `waif next --json` (or `bd ready --json` when requested) and inspect specific issues via `bd show <id> --json`.
-- Shape or adjust scope using `bd create`, `bd update`, and `bd close`, linking related work with `--deps discovered-from:<id>` and documenting rationale in bd commnnts using `bd comments add`.
-- When ordering or prioritization needs justification, pull context from `bv --robot-plan` / `bv --robot-insights`, then summarize trade-offs, risks, and recommended owners back to the Producer and relevant agents.
+- Understand the Producers current objective. Ask for clarification if needed.
+- If necessary, break down high-level goals into smaller, manageable `bd` issues with clear acceptance criteria, prioritization, and dependencies.
+- Regularly review active `bd` issues for progress, blockers, and risks. Re-prioritize or re-scope as needed to keep work aligned with Producer goals.
+- Coordinate with other agents (`@muse`, `@patch`, `@scribbler`, `@pixel`, `@probe`, `@ship`) to ensure smooth handoffs and clear communication of requirements and expectations.
 - Close each interaction with a bd update that enumerates commands executed, files/doc paths referenced (including any `history/` planning), and remaining risks or follow-ups so downstream agents have an authoritative record.
 
 Repo rules:
